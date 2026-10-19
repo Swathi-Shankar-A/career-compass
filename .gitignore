@@ -1,0 +1,25 @@
+# Local environment & secret properties
+config/db.properties
+
+# Compiled Java class files
+*.class
+src/main/webapp/WEB-INF/classes/**/*.class
+bin/
+
+# Temporary / build output
+target/
+build/
+*.war
+*.log
+
+# IDE specific files
+.vscode/
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+
+# OS specific files
+Thumbs.db
+.DS_Store

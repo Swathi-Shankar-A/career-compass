@@ -1,0 +1,12 @@
+# Database Configuration Template
+# Copy this file to config/db.properties and adjust credentials for your local MySQL instance.
+
+db.driver=com.mysql.cj.jdbc.Driver
+db.url=jdbc:mysql://localhost:3306/career_recommendation_system?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+db.username=root
+db.password=root
+
+# Connection pool / basic settings
+db.initialSize=5
+db.maxTotal=20
+db.maxIdle=10

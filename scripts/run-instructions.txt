@@ -1,0 +1,57 @@
+====================================================================
+ QUICK RUN & DEPLOYMENT INSTRUCTIONS FOR APACHE TOMCAT & MYSQL
+====================================================================
+
+1. PREREQUISITES
+   - Java JDK 11, 17, or 21 installed and configured in PATH.
+   - MySQL Server 8.0 running on localhost:3306.
+   - Apache Tomcat 9 (or compatible) installed.
+
+2. DATABASE INITIALIZATION
+   Open a terminal and run:
+   mysql -u root -p < database/schema.sql
+   (Or run database/schema.sql inside MySQL Workbench)
+
+3. CONFIGURE DATABASE CREDENTIALS
+   Copy config/db.properties.example to config/db.properties
+   Update the username and password to match your local MySQL settings:
+     db.url=jdbc:mysql://localhost:3306/career_recommendation_system
+     db.username=root
+     db.password=root
+
+4. COMPILE JAVA SOURCE CODE (NO MAVEN NEEDED)
+   On Windows:
+     Double-click scripts\compile.bat
+     OR run:
+     javac -cp "lib/*" -d src/main/webapp/WEB-INF/classes src/main/java/com/career/**/*.java
+
+   On Linux/macOS:
+     bash scripts/compile.sh
+
+5. INITIALIZE INITIAL ADMINISTRATOR ACCOUNT
+   Run the secure AdminSetup utility from the command line:
+     java -cp "src/main/webapp/WEB-INF/classes;lib/*" com.career.util.AdminSetup admin admin@careercompass.edu "System Administrator" admin123
+
+6. RUN SYSTEM VERIFICATION TEST
+   To verify that all database tables, 20 questions, 35 careers, and algorithms work:
+     java -cp "src/main/webapp/WEB-INF/classes;lib/*" com.career.util.SystemTestHarness
+
+7. DEPLOY TO TOMCAT
+   Option A (Automated script):
+     Double-click scripts\deploy.bat
+
+   Option B (Manual copy):
+     Copy the entire folder "src/main/webapp" to:
+     <TOMCAT_HOME>\webapps\CareerRecommendationSystem
+
+8. START TOMCAT & OPEN BROWSER
+   Start Tomcat:
+     <TOMCAT_HOME>\bin\startup.bat (Windows)
+     <TOMCAT_HOME>/bin/startup.sh (Linux/macOS)
+
+   Open Browser:
+     Public Landing Page:  http://localhost:8080/CareerRecommendationSystem/
+     Student Registration: http://localhost:8080/CareerRecommendationSystem/register
+     Student Login:        http://localhost:8080/CareerRecommendationSystem/login
+     Admin Portal:         http://localhost:8080/CareerRecommendationSystem/admin/login
+====================================================================
