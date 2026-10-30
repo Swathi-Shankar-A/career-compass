@@ -2,7 +2,7 @@
 
 A complete, production-ready, professional Java Web Application built specifically for undergraduate Computer Science & Engineering students to discover their optimal career pathways through a structured 20-topic assessment and a transparent, deterministic recommendation engine.
 
-Built using traditional Java web technologies—**Core Java, Java Servlets, JSP, JDBC, and MySQL**—running on **Apache Tomcat** with **no Maven, no Gradle, and no external application frameworks**.
+Built using traditional Java web technologies—**Core Java, Java Servlets 3.1, JDBC, and MySQL**—with a modern **HTML5, CSS3, and Vanilla JavaScript (Fetch API / JSON)** frontend, running on **Apache Tomcat 9** with **no Maven, no Gradle, and no external application frameworks**.
 
 ---
 
@@ -28,6 +28,7 @@ Built using traditional Java web technologies—**Core Java, Java Servlets, JSP,
 19. [Project Architecture & Key Classes](#19-project-architecture--key-classes)
 20. [Suggested Viva Questions & Answers](#20-suggested-viva-questions--answers)
 21. [Limitations & Future Enhancements](#21-limitations--future-enhancements)
+22. [Verification & Automated Testing](#22-verification--automated-testing)
 
 ---
 
@@ -39,7 +40,8 @@ B.Tech Computer Science & Engineering students are often overwhelmed by the vast
 - **Interest-Based Discovery**: Evaluate student preferences through 20 clear, beginner-friendly technical interest topics rather than high-stress coding puzzles or subjective aptitude tests.
 - **Explainable & Deterministic Recommendations**: Implement a deterministic Core Java algorithm that calculates compatibility scores across 35 seeded CSE career paths and explains *why* each career was matched.
 - **Robust Security**: Enforce salted PBKDF2 SHA-256 password hashing, session fixation countermeasures, CSRF validation, and server-side role-based access control.
-- **Beginner-Friendly Architecture**: Built with standard Servlets and JSP using standard `javac` commands, making it ideal for college viva examinations and learning foundational Java web concepts.
+- **Modern Responsive Frontend**: Pure HTML5, CSS3, and Vanilla JavaScript with responsive layouts, modal dialogs, and asynchronous JSON Fetch API communication without any heavy JavaScript frameworks.
+- **Beginner-Friendly Architecture**: Built with standard Java Servlets and standard `javac` commands, making it ideal for college viva examinations and learning foundational Java web concepts.
 
 ---
 
@@ -68,8 +70,8 @@ B.Tech Computer Science & Engineering students are often overwhelmed by the vast
 
 ## 3. Technology Stack
 
-- **Frontend**: Semantic HTML5, Modern Responsive CSS3 (CSS Variables, Flexbox/Grid, Mobile-first), and Vanilla JavaScript ES6+.
-- **Backend**: Core Java (JDK 11, 17, or 21 compatible), Java Servlets 3.1 (`javax.servlet`), and JavaServer Pages (JSP).
+- **Frontend**: Semantic HTML5, Modern Responsive CSS3 (CSS Variables, Flexbox/Grid, Mobile-first), and Vanilla JavaScript ES6+ (Fetch API, DOM manipulation).
+- **Backend**: Core Java (JDK 11, 17, or 21 compatible), Java Servlets 3.1 (`javax.servlet`), and a zero-dependency JSON serializer (`JsonUtil`).
 - **Database**: MySQL Server 8.0 with InnoDB engine and UTF-8 encoding (`career_recommendation_system`).
 - **JDBC Driver**: MySQL Connector/J 8.3.0 Type-4 JDBC Driver.
 - **Web Server**: Apache Tomcat 9.0 (native `javax.servlet` support).
@@ -219,7 +221,7 @@ Copy-Item "config\db.properties" "src\main\webapp\WEB-INF\classes\db.properties"
 #### Windows CMD:
 ```cmd
 dir /s /b src\main\java\*.java > sources.txt
-javac -cp "lib/*" -d src\main\webapp\WEB-INF\classes @sources.txt
+javac -cp "lib/*" -d src\main\webapp\WEB-INF/classes @sources.txt
 copy /Y config\db.properties src\main\webapp\WEB-INF\classes\db.properties
 del sources.txt
 ```
@@ -243,23 +245,37 @@ The script will compile all Java sources and copy `src/main/webapp` into your To
 Folder structure inside Tomcat webapps:
 ```
 <TOMCAT_HOME>/webapps/CareerRecommendationSystem/
-├── index.jsp
+├── index.html
+├── login.html
+├── register.html
 ├── assets/
 │   ├── css/style.css
 │   └── js/app.js
+├── student/
+│   ├── dashboard.html
+│   ├── assessment.html
+│   ├── results.html
+│   ├── career-details.html
+│   ├── history.html
+│   └── profile.html
+├── admin/
+│   ├── login.html
+│   ├── dashboard.html
+│   ├── questions.html
+│   ├── students.html
+│   ├── student-responses.html
+│   └── careers.html
+├── errors/
+│   ├── 403.html
+│   ├── 404.html
+│   └── 500.html
 └── WEB-INF/
     ├── web.xml
     ├── classes/
     │   ├── db.properties
     │   └── com/career/... (.class files)
-    ├── lib/
-    │   └── mysql-connector-j-8.3.0.jar
-    └── views/
-        ├── admin/
-        ├── auth/
-        ├── common/
-        ├── errors/
-        └── student/
+    └── lib/
+        └── mysql-connector-j-8.3.0.jar
 ```
 
 ---
@@ -267,7 +283,7 @@ Folder structure inside Tomcat webapps:
 ## 13. Starting Tomcat & Accessing the Application
 
 ### 1. Start Tomcat Server
-- **Windows**: Navigate to `<TOMCAT_HOME>\bin` and run `startup.bat`.
+- **Windows**: Navigate to `<TOMCAT_HOME>\bin` and run `startup.bat` (or `catalina.bat run`).
 - **Linux/macOS**: Navigate to `<TOMCAT_HOME>/bin` and run `./startup.sh`.
 
 ### 2. Access in Browser
@@ -276,6 +292,8 @@ Once Tomcat starts, open any modern browser:
 - **Student Registration**: [http://localhost:8080/CareerRecommendationSystem/register](http://localhost:8080/CareerRecommendationSystem/register)
 - **Student Login**: [http://localhost:8080/CareerRecommendationSystem/login](http://localhost:8080/CareerRecommendationSystem/login)
 - **Administrator Portal**: [http://localhost:8080/CareerRecommendationSystem/admin/login](http://localhost:8080/CareerRecommendationSystem/admin/login)
+
+*(If Tomcat is configured on a custom port such as `8085`, use `http://localhost:8085/CareerRecommendationSystem/`).*
 
 ---
 
@@ -290,15 +308,15 @@ Once Tomcat starts, open any modern browser:
    - Upon successful login, you are redirected to the **Student Dashboard**.
 3. **Take Career Assessment**:
    - Click **Start Career Assessment** (`/student/assessment`).
-   - Answer each of the 20 questions one by one.
+   - Answer each of the 20 topics one by one.
    - Select your interest level from the 4 options:
      - *Very interested* (Rating = 4)
      - *Moderately interested* (Rating = 3)
      - *Somewhat interested* (Rating = 2)
      - *Not very interested* (Rating = 1)
-   - Click **Next Question** to proceed.
-   - When question 20 is answered, click **Review & Submit Assessment**.
-   - A modal prompt will ask for confirmation. Click **Confirm & Generate Results**.
+   - Click **Next Topic** to proceed.
+   - When Topic 20 is answered, click **Review & Submit Assessment**.
+   - A modal prompt will ask for confirmation. Click **Submit & Generate Results**.
 4. **Review Recommendations**:
    - The results dashboard (`/student/results`) displays your **Top 5 Career Matches**.
    - Each card highlights:
@@ -317,7 +335,7 @@ Once Tomcat starts, open any modern browser:
 ## 15. Admin User Guide: Setup & Portal Management
 
 ### 1. Secure One-Time Admin Account Initialization
-To avoid insecure hardcoded credentials, run the included `AdminSetup` utility:
+To initialize an administrator account, run the included `AdminSetup` utility:
 
 ```cmd
 java -cp "src/main/webapp/WEB-INF/classes;lib/*" com.career.util.AdminSetup admin admin@careercompass.edu "System Administrator" admin123
@@ -336,9 +354,9 @@ Hash:     65536:684a1ec049e2181402738377... (PBKDF2 SHA-256)
 ### 3. Admin Features
 - **Dashboard (`/admin/dashboard`)**: Monitor registered student counts, total submissions, active question status, and recent submissions.
 - **Questions (`/admin/questions`)**: 
-  - Edit question wording and answer labels.
-  - Soft-deactivate questions (existing student responses are never deleted).
-  - The system validates that exactly 20 active questions exist.
+   - Edit question wording and answer labels.
+   - Soft-deactivate questions (existing student responses are never deleted).
+   - The system validates that exactly 20 active questions exist.
 - **Students Directory (`/admin/students`)**: Search students by name or email.
 - **Student Response Viewer (`/admin/student-responses?submissionId=...`)**: Inspect an individual student's chosen option and rating for all 20 questions, alongside their top 5 career recommendations.
 - **Careers Catalog (`/admin/careers`)**: Inspect all 35 seeded careers and their topic weightings.
@@ -347,16 +365,16 @@ Hash:     65536:684a1ec049e2181402738377... (PBKDF2 SHA-256)
 
 ## 16. Troubleshooting Common Errors
 
-### Error 1: Port 8080 already in use
-- **Cause**: Another service or previous Java process is bound to port 8080.
+### Error 1: Port already in use (e.g. 8080 or 8085)
+- **Cause**: Another service or previous Java process is bound to the port.
 - **Solution (PowerShell)**:
   ```powershell
-  # Find PID using port 8080
-  netstat -ano | findstr :8080
+  # Find PID using port 8080 or 8085
+  netstat -ano | findstr :8085
   # Stop the process (replace <PID> with number from above)
   Stop-Process -Id <PID> -Force
   ```
-- **Alternative**: Change port in `<TOMCAT_HOME>\conf\server.xml` from `8080` to `8082`.
+- **Alternative**: Change port in `<TOMCAT_HOME>\conf\server.xml` to an open port (e.g. `8085`).
 
 ### Error 2: `java.sql.SQLException: Access denied for user 'root'@'localhost'`
 - **Cause**: MySQL root password in `config/db.properties` does not match your MySQL server password.
@@ -487,31 +505,46 @@ CareerRecommendationSystem/
 │   ├── model/                  # POJO entities (Student, Career, Question, etc.)
 │   ├── dao/                    # JDBC Data Access Objects with PreparedStatement
 │   ├── service/                # Business logic (AuthService, RecommendationEngine, QuestionService)
-│   ├── servlet/                # HTTP request controllers (Login, Register, Assessment, Results, Admin)
+│   ├── servlet/                # Dual-mode HTTP/JSON Servlets (Login, Register, Assessment, Results, Admin)
 │   ├── filter/                 # Security filters (StudentAuthFilter, AdminAuthFilter)
-│   └── util/                   # PasswordUtil, SecurityUtil, DatabaseUtil, AdminSetup, SystemTestHarness
+│   └── util/                   # JsonUtil, PasswordUtil, SecurityUtil, DatabaseUtil, AdminSetup, SystemTestHarness
 └── src/main/webapp/
-    ├── index.jsp               # Public landing page
-    ├── assets/css/style.css    # Clean modern stylesheet
-    ├── assets/js/app.js        # 20-question stepper & validation script
+    ├── index.html              # Modern responsive landing page
+    ├── login.html              # Student login portal
+    ├── register.html           # Student registration
+    ├── assets/
+    │   ├── css/style.css       # Clean modern stylesheet & modal layouts
+    │   └── js/app.js           # Frontend controller, session manager & modal handler
+    ├── student/
+    │   ├── dashboard.html      # Student dashboard
+    │   ├── assessment.html     # 20-topic interactive assessment
+    │   ├── results.html        # Top 5 recommended career cards
+    │   ├── career-details.html # Career roadmap and required tools
+    │   ├── history.html        # Historical assessment attempts
+    │   └── profile.html        # Student academic profile and password manager
+    ├── admin/
+    │   ├── login.html          # Administrator login portal
+    │   ├── dashboard.html      # Metric cards & system health
+    │   ├── questions.html      # Question management & soft-deactivation
+    │   ├── students.html       # Student directory & search
+    │   ├── student-responses.html # Submission audit inspection
+    │   └── careers.html        # 35-career catalog & weights
+    ├── errors/
+    │   ├── 403.html
+    │   ├── 404.html
+    │   └── 500.html
     └── WEB-INF/
-        ├── web.xml             # Deployment descriptor
+        ├── web.xml             # Deployment descriptor & servlet mappings
         ├── lib/                # Contains only mysql-connector-j-8.3.0.jar
-        ├── classes/            # Compiled .class files + db.properties
-        └── views/
-            ├── common/         # Shared header.jsp and footer.jsp
-            ├── auth/           # login.jsp and register.jsp
-            ├── student/        # dashboard, assessment, results, career-details, history, profile
-            ├── admin/          # login, dashboard, questions, students, student-responses, careers
-            └── errors/         # 403.jsp, 404.jsp, 500.jsp
+        └── classes/            # Compiled .class files + db.properties
 ```
 
 ---
 
 ## 20. Suggested Viva Questions & Answers
 
-### Q1: Why did you choose Java Servlets and JSP instead of Spring Boot?
-**Answer**: Java Servlets and JSP form the foundational web architecture of Java Enterprise computing. By not using heavy frameworks like Spring Boot or Hibernate, every component—from HTTP request handling, session management, and filter chains to database connection pooling and JDBC PreparedStatements—is implemented transparently and explicitly. This makes the project lightweight, portable, and easy to explain during academic examinations.
+### Q1: Why did you choose Java Servlets instead of Spring Boot or React?
+**Answer**: Java Servlets form the foundational web architecture of Java Enterprise computing. By not using heavy frameworks like Spring Boot or Node.js, every component—from HTTP request handling, session management, and filter chains to database connection pooling and JDBC PreparedStatements—is implemented transparently and explicitly. The frontend uses standard HTML5, CSS3, and Vanilla JavaScript with Fetch API, making the system lightweight, fast, easily maintainable, and ideal for academic viva demonstrations.
 
 ### Q2: How does your recommendation algorithm avoid bias toward careers with more mapped questions?
 **Answer**: We normalize the earned weighted score by the career's theoretical maximum possible score:
@@ -536,7 +569,7 @@ conn.commit();
 If an error occurs anywhere during execution, `conn.rollback()` is invoked in the catch block, ensuring partial records are never left behind.
 
 ### Q6: What prevents a student from accessing admin URLs?
-**Answer**: We implemented a server-side `AdminAuthFilter` mapped to `/admin/*`. It intercepts every incoming request before it reaches an admin Servlet, verifies whether `session.getAttribute("userRole")` equals `"ADMIN"`, and immediately aborts unauthorized requests with HTTP 403 Forbidden.
+**Answer**: We implemented a server-side `AdminAuthFilter` mapped to `/admin/*`. It intercepts every incoming request before it reaches an admin Servlet, verifies whether `session.getAttribute("userRole")` equals `"ADMIN"`, and immediately returns HTTP 401/403 or redirects unauthorized requests.
 
 ### Q7: What is Session Fixation, and how do you protect against it?
 **Answer**: Session fixation occurs when an attacker tricks a user into using a known session ID. Upon successful authentication in `LoginServlet` and `AdminLoginServlet`, we call `session.invalidate()` to destroy the pre-authentication session and issue a brand-new session ID (`request.getSession(true)`).
@@ -548,7 +581,7 @@ If an error occurs anywhere during execution, `conn.rollback()` is invoked in th
 **Answer**: Standardizing the assessment to 20 core topics ensures every student is evaluated across the same breadth of computer science sub-disciplines. The system includes an administrative warning sentinel that checks `active_questions == 20` and pauses new assessments if questions are temporarily missing.
 
 ### Q10: How do you prevent accidental duplicate assessment submissions?
-**Answer**: On the client side, the submit button is disabled and its text changes to *"Computing Recommendations..."* as soon as clicked. On the server side, requests are validated against single-use session tokens (CSRF) and atomic transactions.
+**Answer**: On the client side, the submit button is disabled and its text changes to *"Calculating Recommendations..."* as soon as clicked. On the server side, requests are validated against single-use session tokens (CSRF) and atomic transactions.
 
 ---
 

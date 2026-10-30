@@ -86,12 +86,13 @@ const CareerApp = (function () {
 
         // Fill CSRF tokens in forms
         if (sessionData && sessionData.csrfToken) {
-            document.querySelectorAll('input[name="csrfToken"]').forEach(input => {
+            document.querySelectorAll('input[name="csrfToken"], input.csrf-field, #csrfTokenProfile, #csrfTokenPassword').forEach(input => {
                 input.value = sessionData.csrfToken;
             });
         }
 
         renderNavbar();
+        return sessionData;
     }
 
     /**

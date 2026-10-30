@@ -281,9 +281,24 @@ document.addEventListener('DOMContentLoaded', async function () {
         btn.disabled = true;
         btn.textContent = 'Calculating Recommendations...';
 
+        // Ensure CSRF token is fresh and present
+        let csrfInput = document.getElementById('csrfToken');
+        let session = CareerApp.getSessionData();
+        if (!csrfInput.value || !session || !session.csrfToken) {
+            session = await CareerApp.initSessionNavbar();
+        }
+        if (session && session.csrfToken && csrfInput) {
+            csrfInput.value = session.csrfToken;
+        }
+
         const form = document.getElementById('assessmentForm');
         const formData = new FormData(form);
         const urlParams = new URLSearchParams(formData);
+
+        // Explicitly set csrfToken in parameters if available
+        if (session && session.csrfToken) {
+            urlParams.set('csrfToken', session.csrfToken);
+        }
 
         const submitRes = await CareerApp.fetchJson(ctx + '/student/assessment', {
             method: 'POST',

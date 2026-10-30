@@ -1123,8 +1123,9 @@ img, svg {
 }
 
 /* --------------------------------------------------------------------------
-   Modal Dialogs
+   Modal Dialogs (supports both .modal-overlay and .modal)
    -------------------------------------------------------------------------- */
+.modal,
 .modal-overlay {
   display: none;
   position: fixed;
@@ -1132,18 +1133,20 @@ img, svg {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 25, 47, 0.6);
-  backdrop-filter: blur(2px);
+  background: rgba(10, 25, 47, 0.65);
+  backdrop-filter: blur(4px);
   z-index: 1000;
   align-items: center;
   justify-content: center;
   padding: 1rem;
 }
 
+.modal.active,
 .modal-overlay.active {
-  display: flex;
+  display: flex !important;
 }
 
+.modal-dialog,
 .modal-box {
   background: var(--white);
   border-radius: var(--radius-xl);
@@ -1154,6 +1157,39 @@ img, svg {
   padding: 2rem;
   box-shadow: var(--shadow-xl);
   position: relative;
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.modal-body {
+  margin-bottom: 1.5rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--slate-100);
 }
 
 .modal-close {
@@ -1163,8 +1199,11 @@ img, svg {
   background: none;
   border: none;
   font-size: 1.5rem;
+  line-height: 1;
   color: var(--slate-400);
   cursor: pointer;
+  padding: 0.25rem;
+  transition: color var(--transition);
 }
 
 .modal-close:hover {
