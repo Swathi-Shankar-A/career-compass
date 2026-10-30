@@ -5,6 +5,7 @@ import com.career.dao.CareerDAO;
 import com.career.dao.QuestionDAO;
 import com.career.dao.StudentDAO;
 import com.career.model.AssessmentSubmission;
+import com.career.util.JsonUtil;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,8 +43,24 @@ public class AdminDashboardServlet extends HttpServlet {
         int totalCareers = careerDAO.countCareers();
 
         List<AssessmentSubmission> recentSubmissions = assessmentDAO.getRecentSubmissions(5);
-
         boolean questionCountValid = (activeQuestions == 20);
+
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        if ((accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format)) {
+            response.setContentType("application/json;charset=UTF-8");
+            StringBuilder sb = new StringBuilder("{");
+            sb.append("\"totalStudents\":").append(totalStudents).append(",");
+            sb.append("\"totalSubmissions\":").append(totalSubmissions).append(",");
+            sb.append("\"activeQuestions\":").append(activeQuestions).append(",");
+            sb.append("\"totalQuestions\":").append(totalQuestions).append(",");
+            sb.append("\"totalCareers\":").append(totalCareers).append(",");
+            sb.append("\"questionCountValid\":").append(questionCountValid).append(",");
+            sb.append("\"recentSubmissions\":").append(JsonUtil.submissionsToJson(recentSubmissions));
+            sb.append("}");
+            response.getWriter().write(sb.toString());
+            return;
+        }
 
         request.setAttribute("totalStudents", totalStudents);
         request.setAttribute("totalSubmissions", totalSubmissions);
@@ -53,6 +70,6 @@ public class AdminDashboardServlet extends HttpServlet {
         request.setAttribute("questionCountValid", questionCountValid);
         request.setAttribute("recentSubmissions", recentSubmissions);
 
-        request.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(request, response);
+        request.getRequestDispatcher("/admin/dashboard.html").forward(request, response);
     }
 }

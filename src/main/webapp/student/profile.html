@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profile - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container container-narrow">
+        <div style="margin-bottom: 2rem;">
+            <span class="badge badge-blue" style="margin-bottom: 0.5rem;">Academic Settings</span>
+            <h1 style="font-size: 2rem; color: var(--navy-900); font-weight: 800;">
+                Student Profile
+            </h1>
+            <p style="color: var(--slate-600); font-size: 0.95rem;">
+                View and maintain your enrolled academic details and secure account settings.
+            </p>
+        </div>
+
+        <div id="profileAlertContainer"></div>
+
+        <!-- Academic Information Card -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <h2 style="font-size: 1.25rem; color: var(--navy-900); font-weight: 700;">Academic Information</h2>
+                <span class="badge badge-slate">Enrolled Profile</span>
+            </div>
+
+            <form id="updateProfileForm" novalidate>
+                <input type="hidden" name="csrfToken" id="csrfTokenProfile">
+                <input type="hidden" name="action" value="updateProfile">
+
+                <div class="form-group">
+                    <label for="fullName" class="form-label">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Registered Email</label>
+                    <input type="email" id="email" class="form-control" readonly disabled>
+                    <div class="form-hint">Email address cannot be changed once registered (primary identifier).</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="collegeName" class="form-label">College / University</label>
+                    <input type="text" id="collegeName" name="collegeName" class="form-control" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="degree" class="form-label">Degree / Department</label>
+                        <select id="degree" name="degree" class="form-control" required>
+                            <option value="B.Tech CSE">B.Tech Computer Science &amp; Engg</option>
+                            <option value="B.Tech CSE (AI &amp; ML)">B.Tech CSE (AI &amp; ML)</option>
+                            <option value="B.Tech CSE (Data Science)">B.Tech CSE (Data Science)</option>
+                            <option value="B.Tech CSE (Cybersecurity)">B.Tech CSE (Cybersecurity)</option>
+                            <option value="B.Tech Information Technology">B.Tech Information Technology</option>
+                            <option value="B.Tech CSE (IoT &amp; Systems)">B.Tech CSE (IoT &amp; Systems)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentYear" class="form-label">Current Year</label>
+                        <select id="currentYear" name="currentYear" class="form-control" required>
+                            <option value="1">Year 1 (Freshman)</option>
+                            <option value="2">Year 2 (Sophomore)</option>
+                            <option value="3">Year 3 (Junior)</option>
+                            <option value="4">Year 4 (Senior)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+                    Save Academic Details
+                </button>
+            </form>
+        </div>
+
+        <!-- Security / Password Card -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <h2 style="font-size: 1.25rem; color: var(--navy-900); font-weight: 700;">Account Security</h2>
+                <span class="badge badge-teal">PBKDF2 SHA-256</span>
+            </div>
+
+            <form id="changePasswordForm" novalidate>
+                <input type="hidden" name="csrfToken" id="csrfTokenPassword">
+                <input type="hidden" name="action" value="changePassword">
+
+                <div class="form-group">
+                    <label for="currentPassword" class="form-label">Current Password</label>
+                    <input type="password" id="currentPassword" name="currentPassword" class="form-control" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" id="newPassword" name="newPassword" class="form-control" minlength="6" required>
+                        <div class="form-hint">At least 6 characters.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+                        <input type="password" id="confirmNewPassword" name="confirmNewPassword" class="form-control" minlength="6" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-navy" id="changePasswordBtn">
+                    Update Password
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const alertBox = document.getElementById('profileAlertContainer');
+
+    function showAlert(type, msg) {
+        alertBox.innerHTML = `
+            <div class="alert alert-${type} fade-in">
+                <div>${CareerApp.escapeHtml(msg)}</div>
+            </div>`;
+        window.scrollTo({ top: alertBox.offsetTop - 80, behavior: 'smooth' });
+    }
+
+    const res = await CareerApp.fetchJson(ctx + '/student/profile?format=json');
+    if (res && res.student) {
+        const s = res.student;
+        document.getElementById('fullName').value = s.fullName || '';
+        document.getElementById('email').value = s.email || '';
+        document.getElementById('collegeName').value = s.collegeName || '';
+        if (s.degree) document.getElementById('degree').value = s.degree;
+        if (s.currentYear) document.getElementById('currentYear').value = s.currentYear;
+    }
+
+    // Profile form submit
+    document.getElementById('updateProfileForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = document.getElementById('saveProfileBtn');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        const bodyData = new URLSearchParams(new FormData(this));
+        const updateRes = await CareerApp.fetchJson(ctx + '/student/profile', {
+            method: 'POST',
+            body: bodyData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        btn.disabled = false;
+        btn.textContent = 'Save Academic Details';
+
+        if (updateRes && updateRes.success) {
+            showAlert('success', updateRes.message || 'Academic profile updated successfully.');
+            CareerApp.initSessionNavbar(); // Refresh navbar with new student name
+        } else {
+            showAlert('danger', updateRes ? updateRes.message : 'Could not update profile.');
+        }
+    });
+
+    // Password form submit
+    document.getElementById('changePasswordForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = document.getElementById('changePasswordBtn');
+        const curPass = document.getElementById('currentPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const confPass = document.getElementById('confirmNewPassword').value;
+
+        if (!curPass || !newPass || !confPass) {
+            showAlert('danger', 'Please enter your current password and new password confirmation.');
+            return;
+        }
+
+        if (newPass !== confPass) {
+            showAlert('danger', 'New password and confirmation password do not match.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Updating Password...';
+
+        const bodyData = new URLSearchParams(new FormData(this));
+        const passRes = await CareerApp.fetchJson(ctx + '/student/profile', {
+            method: 'POST',
+            body: bodyData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+
+        if (passRes && passRes.success) {
+            showAlert('success', passRes.message || 'Password changed successfully.');
+            this.reset();
+        } else {
+            showAlert('danger', passRes ? passRes.message : 'Password update failed.');
+        }
+    });
+});
+</script>
+</body>
+</html>

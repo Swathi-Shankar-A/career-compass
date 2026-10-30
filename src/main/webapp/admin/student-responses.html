@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Response Audit - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header no-print">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container">
+        <div class="no-print" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <a href="students" id="backToStudentLink" class="btn btn-secondary btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back to Student Directory</span>
+            </a>
+
+            <button type="button" onclick="window.print()" class="btn btn-navy btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                <span>Print Audit Report</span>
+            </button>
+        </div>
+
+        <div id="studentResponsesContainer">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <div>Retrieving student assessment response audit record...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer no-print">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Administrator Access Portal.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const params = new URLSearchParams(window.location.search);
+    const subId = params.get('submissionId');
+    const container = document.getElementById('studentResponsesContainer');
+
+    if (!subId) {
+        window.location.href = 'students';
+        return;
+    }
+
+    const res = await CareerApp.fetchJson(ctx + '/admin/student-responses?submissionId=' + encodeURIComponent(subId) + '&format=json');
+    if (!res || !res.success || !res.submission) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <div>${CareerApp.escapeHtml(res ? res.message : 'Submission record could not be loaded.')}</div>
+            </div>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <a href="students" class="btn btn-secondary">Return to Student Directory</a>
+            </div>`;
+        return;
+    }
+
+    const sub = res.submission;
+    document.getElementById('backToStudentLink').href = `students?studentId=${sub.studentId}`;
+
+    const responses = sub.responses || [];
+    const recommendations = sub.recommendations || [];
+
+    container.innerHTML = `
+        <!-- Submission & Student Meta -->
+        <div class="card fade-in" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <span class="badge badge-teal">Submission Record #${sub.id}</span>
+                    <h1 style="font-size: 1.6rem; color: var(--navy-900); font-weight: 800; margin-top: 0.25rem;">
+                        Student Responses: ${CareerApp.escapeHtml(sub.studentName)}
+                    </h1>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--slate-500); text-align: right;">
+                    Submitted: <strong>${sub.submissionDate || 'N/A'}</strong>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.9rem; background: var(--slate-50); padding: 1rem; border-radius: var(--radius-md);">
+                <div><strong>Email:</strong> ${CareerApp.escapeHtml(sub.studentEmail)}</div>
+                <div><strong>College:</strong> ${CareerApp.escapeHtml(sub.studentCollege)}</div>
+                <div><strong>Degree:</strong> ${CareerApp.escapeHtml(sub.studentDegree)}</div>
+                <div><strong>Year:</strong> Year ${sub.studentYear}</div>
+            </div>
+
+            ${sub.summaryNotes ? `
+                <div style="margin-top: 1rem; font-size: 0.95rem; color: var(--slate-700); line-height: 1.6;">
+                    <strong>Algorithmic Profile Summary:</strong> ${CareerApp.escapeHtml(sub.summaryNotes)}
+                </div>
+            ` : ''}
+        </div>
+
+        <!-- Top 5 Recommended Careers -->
+        <div class="card fade-in" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <div>
+                    <h2 style="font-size: 1.25rem; color: var(--navy-900); font-weight: 700;">
+                        Generated Top 5 Recommendations
+                    </h2>
+                    <div style="font-size: 0.85rem; color: var(--slate-500);">Computed by Core Java RecommendationEngine.</div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">Rank</th>
+                            <th>Career Name</th>
+                            <th>Match Score</th>
+                            <th>Algorithmic Match Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${recommendations.map(rec => `
+                            <tr>
+                                <td><div class="badge badge-navy">#${rec.rankOrder}</div></td>
+                                <td><strong>${CareerApp.escapeHtml(rec.career ? rec.career.name : '')}</strong></td>
+                                <td><strong style="color: var(--teal-700);">${rec.compatibilityScore}%</strong></td>
+                                <td style="font-size: 0.85rem; color: var(--slate-700);">${CareerApp.escapeHtml(rec.matchReason)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- All 20 Responses -->
+        <div class="card fade-in" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <div>
+                    <h2 style="font-size: 1.25rem; color: var(--navy-900); font-weight: 700;">
+                        Full Assessment Responses (${responses.length} Topics)
+                    </h2>
+                    <div style="font-size: 0.85rem; color: var(--slate-500);">Snapshot of question wording and selected option at time of submission.</div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th style="width: 140px;">Category</th>
+                            <th>Question Text (Snapshot)</th>
+                            <th>Selected Option (Snapshot)</th>
+                            <th style="width: 110px; text-align: center;">Rating (1–4)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${responses.map((resp, i) => `
+                            <tr>
+                                <td><strong>#${i + 1}</strong></td>
+                                <td><span class="badge badge-slate">${CareerApp.escapeHtml(resp.category || 'Topic')}</span></td>
+                                <td style="font-size: 0.9rem; font-weight: 500;">${CareerApp.escapeHtml(resp.questionTextSnapshot)}</td>
+                                <td style="font-size: 0.85rem; color: var(--slate-700);">${CareerApp.escapeHtml(resp.selectedOptionSnapshot)}</td>
+                                <td style="text-align: center;">
+                                    <span class="badge ${resp.ratingValue >= 3 ? 'badge-teal' : 'badge-blue'}">${resp.ratingValue} / 4</span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+});
+</script>
+</body>
+</html>

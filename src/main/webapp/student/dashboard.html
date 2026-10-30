@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container">
+        <!-- Dashboard Alert Container -->
+        <div id="dashboardAlertContainer" style="margin-bottom: 1.5rem;"></div>
+
+        <!-- Welcome Header -->
+        <div style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <span class="badge badge-blue" style="margin-bottom: 0.5rem;">Student Portal</span>
+                    <h1 style="font-size: 2rem; color: var(--navy-900); font-weight: 800;" id="welcomeHeading">
+                        Welcome back!
+                    </h1>
+                    <p style="color: var(--slate-600); font-size: 1rem; margin-top: 0.25rem;" id="studentAcademicDetails">
+                        Loading academic profile...
+                    </p>
+                </div>
+
+                <div>
+                    <a href="assessment" class="btn btn-primary btn-lg" id="assessmentActionBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <span id="assessmentBtnText">Start Career Assessment</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Assessment Highlight Card -->
+        <div id="latestResultContainer">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <div>Retrieving latest assessment summary...</div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Grid -->
+        <div class="admin-metrics-grid" style="margin-bottom: 2rem;">
+            <div class="metric-card">
+                <div class="metric-icon metric-icon-blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-value" id="statsSubmissionsCount">0</div>
+                    <div class="metric-label">Completed Assessments</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon metric-icon-teal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-value" id="statsActiveQuestions">20</div>
+                    <div class="metric-label">Standard Topics Evaluated</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon metric-icon-navy">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-value">35</div>
+                    <div class="metric-label">CSE Career Profiles Seeded</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Navigation Cards -->
+        <h2 style="font-size: 1.35rem; color: var(--navy-900); font-weight: 700; margin-bottom: 1rem;">
+            Portal Quick Actions
+        </h2>
+        <div class="steps-grid" style="margin-bottom: 3rem;">
+            <div class="card card-hover" style="cursor: pointer;" onclick="location.href='assessment'">
+                <div style="font-size: 1.15rem; font-weight: 700; color: var(--navy-900); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    <span>Career Assessment</span>
+                </div>
+                <p style="color: var(--slate-600); font-size: 0.9rem;">
+                    Answer 20 technical interest questions to generate or refresh your Top 5 matched careers.
+                </p>
+            </div>
+
+            <div class="card card-hover" style="cursor: pointer;" onclick="location.href='results'">
+                <div style="font-size: 1.15rem; font-weight: 700; color: var(--navy-900); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span>Latest Results</span>
+                </div>
+                <p style="color: var(--slate-600); font-size: 0.9rem;">
+                    Review your Top 5 recommendations with required skills, industry tools, and printable report.
+                </p>
+            </div>
+
+            <div class="card card-hover" style="cursor: pointer;" onclick="location.href='profile'">
+                <div style="font-size: 1.15rem; font-weight: 700; color: var(--navy-900); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--navy-700)" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Academic Profile</span>
+                </div>
+                <p style="color: var(--slate-600); font-size: 0.9rem;">
+                    Maintain college, degree specialization, current year of study, and change account password.
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const alertBox = document.getElementById('dashboardAlertContainer');
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('msg') === 'no_assessment') {
+        alertBox.innerHTML = `
+            <div class="alert alert-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <div>You have not taken an assessment yet. Please complete the 20-question assessment to view your recommendations!</div>
+            </div>`;
+    }
+
+    const data = await CareerApp.fetchJson(ctx + '/student/dashboard?format=json');
+    if (!data) return;
+
+    if (data.student) {
+        document.getElementById('welcomeHeading').textContent = `Welcome back, ${data.student.fullName}!`;
+        document.getElementById('studentAcademicDetails').textContent = 
+            `${data.student.collegeName} • ${data.student.degree} • Year ${data.student.currentYear}`;
+    }
+
+    const totalSubs = data.totalSubmissions || 0;
+    document.getElementById('statsSubmissionsCount').textContent = totalSubs;
+    document.getElementById('statsActiveQuestions').textContent = data.activeQuestionCount || 20;
+
+    if (totalSubs > 0) {
+        document.getElementById('assessmentBtnText').textContent = 'Retake Assessment';
+    }
+
+    const latestBox = document.getElementById('latestResultContainer');
+    if (data.latestSubmission && data.latestSubmission.recommendations && data.latestSubmission.recommendations.length > 0) {
+        const topRec = data.latestSubmission.recommendations[0];
+        const career = topRec.career;
+        latestBox.innerHTML = `
+            <div class="card fade-in" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-color: #bae6fd; margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <span class="badge badge-teal" style="margin-bottom: 0.5rem;">Latest Assessment Result</span>
+                        <h2 style="font-size: 1.5rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.35rem;">
+                            Top Career Match: ${CareerApp.escapeHtml(career.name)}
+                        </h2>
+                        <p style="color: var(--slate-700); font-size: 0.95rem; max-width: 700px; margin-bottom: 0.75rem;">
+                            ${CareerApp.escapeHtml(career.shortDescription)}
+                        </p>
+                        <div style="font-size: 0.85rem; color: var(--slate-600);">
+                            Assessed on: <strong>${data.latestSubmission.submissionDate}</strong> &bull;
+                            Match Compatibility: <strong style="color: var(--teal-700);">${topRec.compatibilityScore}%</strong>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+                        <a href="results?submissionId=${data.latestSubmission.id}" class="btn btn-primary">
+                            View Full Top 5 Report
+                        </a>
+                        <a href="history" class="btn btn-secondary btn-sm">
+                            View All ${totalSubs} Attempts
+                        </a>
+                    </div>
+                </div>
+            </div>`;
+    } else {
+        latestBox.innerHTML = `
+            <div class="card" style="text-align: center; padding: 3rem 1.5rem; margin-bottom: 2rem;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--blue-50); color: var(--blue-600); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                    </svg>
+                </div>
+                <h2 style="font-size: 1.3rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.5rem;">
+                    Ready for your personalized career match?
+                </h2>
+                <p style="color: var(--slate-600); max-width: 500px; margin: 0 auto 1.5rem auto; font-size: 0.95rem;">
+                    Complete our 20-topic assessment to discover your top 5 computing specializations backed by deterministic compatibility scoring.
+                </p>
+                <a href="assessment" class="btn btn-primary btn-lg">
+                    Start 20-Question Assessment
+                </a>
+            </div>`;
+    }
+});
+</script>
+</body>
+</html>

@@ -3,6 +3,7 @@ package com.career.servlet;
 import com.career.dao.AssessmentDAO;
 import com.career.model.AssessmentSubmission;
 import com.career.model.Student;
+import com.career.util.JsonUtil;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -30,6 +31,10 @@ public class RecommendationResultsServlet extends HttpServlet {
         Student student = (session != null) ? (Student) session.getAttribute("studentUser") : null;
         String role = (session != null) ? (String) session.getAttribute("userRole") : null;
 
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        boolean isJson = (accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format);
+
         String subIdStr = request.getParameter("submissionId");
         AssessmentSubmission submission = null;
 
@@ -46,13 +51,30 @@ public class RecommendationResultsServlet extends HttpServlet {
         }
 
         if (submission == null) {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"message\":\"no_assessment\"}");
+                return;
+            }
             response.sendRedirect(request.getContextPath() + "/student/dashboard?msg=no_assessment");
             return;
         }
 
         // Security check: ensure student can only view their own submission (admins can view any)
         if (student != null && !"ADMIN".equals(role) && submission.getStudentId() != student.getId()) {
+            if (isJson) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"message\":\"Access Denied: You cannot view another student's results.\"}");
+                return;
+            }
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied: You cannot view another student's results.");
+            return;
+        }
+
+        if (isJson) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"success\":true,\"submission\":" + JsonUtil.toJson(submission) + "}");
             return;
         }
 
@@ -60,6 +82,6 @@ public class RecommendationResultsServlet extends HttpServlet {
         request.setAttribute("recommendations", submission.getRecommendations());
         request.setAttribute("responses", submission.getResponses());
 
-        request.getRequestDispatcher("/WEB-INF/views/student/results.jsp").forward(request, response);
+        request.getRequestDispatcher("/student/results.html").forward(request, response);
     }
 }

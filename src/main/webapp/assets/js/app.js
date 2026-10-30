@@ -1,265 +1,260 @@
 /**
  * Career Recommendation System for B.Tech CSE Students
- * Interactive JavaScript for Mobile Navigation, Assessment Stepper,
- * Validation, and Modal Dialogs.
+ * Complete Vanilla JavaScript Frontend Engine
+ * Handles Navigation, Session State, API Requests, Stepper, and Dynamic UI Rendering.
  */
 
-document.addEventListener('DOMContentLoaded', function () {
-    initMobileNav();
-    initAssessmentStepper();
-    initFormValidations();
-    initModals();
-});
+const CareerApp = (function () {
+    'use strict';
 
-/* --------------------------------------------------------------------------
-   Mobile Navigation
-   -------------------------------------------------------------------------- */
-function initMobileNav() {
-    var toggleBtn = document.querySelector('.nav-toggle');
-    var navMenu = document.querySelector('.nav-menu');
+    // Current session cache
+    let sessionData = null;
 
-    if (toggleBtn && navMenu) {
-        toggleBtn.addEventListener('click', function () {
-            navMenu.classList.toggle('active');
-            var isExpanded = navMenu.classList.contains('active');
-            toggleBtn.setAttribute('aria-expanded', isExpanded);
-        });
+    /**
+     * Determines application context path (e.g., "/CareerRecommendationSystem" or "")
+     */
+    function getContextPath() {
+        const pathName = window.location.pathname;
+        if (pathName.startsWith('/CareerRecommendationSystem')) {
+            return '/CareerRecommendationSystem';
+        }
+        return '';
     }
-}
 
-/* --------------------------------------------------------------------------
-   20-Question Assessment Stepper
-   -------------------------------------------------------------------------- */
-function initAssessmentStepper() {
-    var stepperForm = document.getElementById('assessmentForm');
-    if (!stepperForm) return;
+    /**
+     * Escapes HTML to prevent XSS in dynamic templates.
+     */
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
-    var questionSteps = document.querySelectorAll('.assessment-step');
-    var totalQuestions = questionSteps.length;
-    var currentStepIndex = 0;
+    /**
+     * Reusable JSON fetch wrapper with error handling and CSRF support
+     */
+    async function fetchJson(url, options = {}) {
+        const defaultHeaders = {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
 
-    var prevBtn = document.getElementById('prevQuestionBtn');
-    var nextBtn = document.getElementById('nextQuestionBtn');
-    var reviewBtn = document.getElementById('reviewQuestionsBtn');
-    var submitBtn = document.getElementById('submitAssessmentBtn');
-    var confirmModal = document.getElementById('confirmSubmitModal');
+        if (sessionData && sessionData.csrfToken) {
+            defaultHeaders['X-CSRF-Token'] = sessionData.csrfToken;
+        }
 
-    var currentNumberSpan = document.getElementById('currentQuestionNum');
-    var progressPercentSpan = document.getElementById('progressPercent');
-    var progressBarFill = document.getElementById('progressBarFill');
+        options.headers = Object.assign({}, defaultHeaders, options.headers || {});
+        options.credentials = 'same-origin';
 
-    function updateStepView() {
-        questionSteps.forEach(function (step, index) {
-            if (index === currentStepIndex) {
-                step.style.display = 'block';
-            } else {
-                step.style.display = 'none';
+        try {
+            const res = await fetch(url, options);
+
+            // If session expired or unauthorized
+            if (res.status === 401) {
+                const data = await res.json().catch(() => ({}));
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                    return null;
+                }
             }
-        });
 
-        // Update progress counters
-        var qNum = currentStepIndex + 1;
-        if (currentNumberSpan) currentNumberSpan.textContent = qNum;
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                return { success: false, message: errData.message || `Server returned error (${res.status})` };
+            }
 
-        // Calculate answered count
-        var answeredCount = countAnsweredQuestions();
-        var percent = Math.round((answeredCount / totalQuestions) * 100);
-
-        if (progressPercentSpan) progressPercentSpan.textContent = percent + '%';
-        if (progressBarFill) progressBarFill.style.width = percent + '%';
-
-        // Nav buttons visibility
-        if (prevBtn) {
-            prevBtn.style.display = (currentStepIndex === 0) ? 'none' : 'inline-flex';
+            return await res.json();
+        } catch (err) {
+            console.error('[CareerApp] Fetch error:', err);
+            return { success: false, message: 'Network connection error. Please verify your connection.' };
         }
-
-        if (nextBtn) {
-            nextBtn.style.display = (currentStepIndex < totalQuestions - 1) ? 'inline-flex' : 'none';
-        }
-
-        if (reviewBtn) {
-            reviewBtn.style.display = (currentStepIndex === totalQuestions - 1) ? 'inline-flex' : 'none';
-        }
-
-        // Scroll step to top smoothly
-        window.scrollTo({ top: stepperForm.offsetTop - 80, behavior: 'smooth' });
     }
 
-    function countAnsweredQuestions() {
-        var count = 0;
-        questionSteps.forEach(function (step) {
-            var radios = step.querySelectorAll('input[type="radio"]');
-            var isAnswered = Array.prototype.some.call(radios, function (radio) {
-                return radio.checked;
+    /**
+     * Fetches current session and initializes navigation bar across all pages
+     */
+    async function initSessionNavbar() {
+        const ctx = getContextPath();
+        const data = await fetchJson(ctx + '/api/session');
+        if (data) {
+            sessionData = data;
+        }
+
+        // Fill CSRF tokens in forms
+        if (sessionData && sessionData.csrfToken) {
+            document.querySelectorAll('input[name="csrfToken"]').forEach(input => {
+                input.value = sessionData.csrfToken;
             });
-            if (isAnswered) count++;
-        });
-        return count;
+        }
+
+        renderNavbar();
     }
 
-    function isCurrentStepAnswered() {
-        var currentStep = questionSteps[currentStepIndex];
-        var radios = currentStep.querySelectorAll('input[type="radio"]');
-        return Array.prototype.some.call(radios, function (radio) {
-            return radio.checked;
+    /**
+     * Renders standard responsive navigation links and user actions
+     */
+    function renderNavbar() {
+        const ctx = getContextPath();
+        const navMenu = document.getElementById('siteNavMenu');
+        const navActions = document.getElementById('siteNavActions');
+        const currentPath = window.location.pathname;
+
+        if (!navMenu || !navActions) return;
+
+        const role = sessionData && sessionData.authenticated ? sessionData.role : null;
+
+        if (role === 'STUDENT') {
+            navMenu.innerHTML = `
+                <li><a href="${ctx}/" class="nav-link ${currentPath === ctx + '/' || currentPath === ctx + '/index.html' ? 'active' : ''}">Home</a></li>
+                <li><a href="${ctx}/student/dashboard" class="nav-link ${currentPath.includes('/student/dashboard') ? 'active' : ''}">Dashboard</a></li>
+                <li><a href="${ctx}/student/assessment" class="nav-link ${currentPath.includes('/student/assessment') ? 'active' : ''}">Take Assessment</a></li>
+                <li><a href="${ctx}/student/results" class="nav-link ${currentPath.includes('/student/results') ? 'active' : ''}">My Results</a></li>
+                <li><a href="${ctx}/student/history" class="nav-link ${currentPath.includes('/student/history') ? 'active' : ''}">History</a></li>
+                <li><a href="${ctx}/student/profile" class="nav-link ${currentPath.includes('/student/profile') ? 'active' : ''}">Profile</a></li>
+            `;
+
+            const initials = (sessionData.fullName || 'S').charAt(0).toUpperCase();
+            navActions.innerHTML = `
+                <div class="nav-user-pill">
+                    <div class="nav-user-avatar">${initials}</div>
+                    <span>${escapeHtml(sessionData.fullName || 'Student')}</span>
+                </div>
+                <a href="${ctx}/logout" class="btn btn-outline-white btn-sm">Logout</a>
+                <button class="nav-toggle" aria-label="Toggle navigation">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+        } else if (role === 'ADMIN') {
+            navMenu.innerHTML = `
+                <li><a href="${ctx}/" class="nav-link ${currentPath === ctx + '/' || currentPath === ctx + '/index.html' ? 'active' : ''}">Home</a></li>
+                <li><a href="${ctx}/admin/dashboard" class="nav-link ${currentPath.includes('/admin/dashboard') ? 'active' : ''}">Admin Dashboard</a></li>
+                <li><a href="${ctx}/admin/questions" class="nav-link ${currentPath.includes('/admin/questions') ? 'active' : ''}">Questions</a></li>
+                <li><a href="${ctx}/admin/students" class="nav-link ${currentPath.includes('/admin/students') ? 'active' : ''}">Students</a></li>
+                <li><a href="${ctx}/admin/careers" class="nav-link ${currentPath.includes('/admin/careers') ? 'active' : ''}">Careers (35)</a></li>
+            `;
+
+            navActions.innerHTML = `
+                <div class="nav-user-pill">
+                    <div class="nav-user-avatar" style="background: var(--teal-600);">A</div>
+                    <span>${escapeHtml(sessionData.username || 'Admin')} (Admin)</span>
+                </div>
+                <a href="${ctx}/admin/logout" class="btn btn-outline-white btn-sm">Logout</a>
+                <button class="nav-toggle" aria-label="Toggle navigation">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+        } else {
+            navMenu.innerHTML = `
+                <li><a href="${ctx}/" class="nav-link ${currentPath === ctx + '/' || currentPath === ctx + '/index.html' ? 'active' : ''}">Home</a></li>
+                <li><a href="${ctx}/register" class="nav-link ${currentPath.includes('/register') ? 'active' : ''}">Student Register</a></li>
+                <li><a href="${ctx}/login" class="nav-link ${currentPath.includes('/login') && !currentPath.includes('/admin/login') ? 'active' : ''}">Student Login</a></li>
+                <li><a href="${ctx}/admin/login" class="nav-link ${currentPath.includes('/admin/login') ? 'active' : ''}">Admin Portal</a></li>
+            `;
+
+            navActions.innerHTML = `
+                <a href="${ctx}/login" class="btn btn-primary btn-sm">Get Started</a>
+                <button class="nav-toggle" aria-label="Toggle navigation">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+        }
+
+        initMobileNav();
+    }
+
+    /**
+     * Initializes mobile hamburger toggle button
+     */
+    function initMobileNav() {
+        const toggleBtn = document.querySelector('.nav-toggle');
+        const navMenu = document.querySelector('.nav-menu');
+
+        if (toggleBtn && navMenu) {
+            toggleBtn.onclick = function (e) {
+                e.stopPropagation();
+                navMenu.classList.toggle('active');
+            };
+
+            document.addEventListener('click', function (e) {
+                if (!navMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
+                    navMenu.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    /**
+     * Modal dialog handlers
+     */
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function initModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-close-modal]').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const targetId = btn.getAttribute('data-close-modal');
+                closeModal(targetId);
+            });
         });
     }
 
-    // Radio Card click handling
-    var optionCards = document.querySelectorAll('.option-card');
-    optionCards.forEach(function (card) {
-        card.addEventListener('click', function (e) {
-            var radio = this.querySelector('input[type="radio"]');
-            if (radio && e.target !== radio) {
-                radio.checked = true;
-                // Trigger change event
-                var event = new Event('change', { bubbles: true });
-                radio.dispatchEvent(event);
-            }
-            // Update active state visual
-            var parent = this.closest('.options-list');
-            if (parent) {
-                parent.querySelectorAll('.option-card').forEach(function (c) {
-                    c.classList.remove('selected');
-                });
-            }
-            this.classList.add('selected');
-        });
-    });
+    // Exported Public API
+    return {
+        getContextPath,
+        escapeHtml,
+        fetchJson,
+        initSessionNavbar,
+        renderNavbar,
+        openModal,
+        closeModal,
+        initModals,
+        getSessionData: () => sessionData
+    };
+})();
 
-    // Mark existing pre-selected radios
-    document.querySelectorAll('input[type="radio"]:checked').forEach(function (radio) {
-        var card = radio.closest('.option-card');
-        if (card) card.classList.add('selected');
-    });
+// Global helpers for inline HTML onclick attributes
+function openModal(id) { CareerApp.openModal(id); }
+function closeModal(id) { CareerApp.closeModal(id); }
 
-    if (nextBtn) {
-        nextBtn.addEventListener('click', function () {
-            if (!isCurrentStepAnswered()) {
-                alert('Please select an interest level before proceeding to the next question.');
-                return;
-            }
-            if (currentStepIndex < totalQuestions - 1) {
-                currentStepIndex++;
-                updateStepView();
-            }
-        });
-    }
-
-    if (prevBtn) {
-        prevBtn.addEventListener('click', function () {
-            if (currentStepIndex > 0) {
-                currentStepIndex--;
-                updateStepView();
-            }
-        });
-    }
-
-    if (reviewBtn) {
-        reviewBtn.addEventListener('click', function () {
-            if (!isCurrentStepAnswered()) {
-                alert('Please select an interest level for this question.');
-                return;
-            }
-            var answered = countAnsweredQuestions();
-            if (answered < totalQuestions) {
-                alert('You have answered ' + answered + ' of ' + totalQuestions + ' questions. Please answer all 20 questions to get accurate career recommendations.');
-                return;
-            }
-            // Open confirmation modal
-            if (confirmModal) {
-                confirmModal.classList.add('active');
-            }
-        });
-    }
-
-    // Modal Confirmation submission
-    if (stepperForm) {
-        stepperForm.addEventListener('submit', function (e) {
-            var answered = countAnsweredQuestions();
-            if (answered < totalQuestions) {
-                e.preventDefault();
-                alert('Incomplete assessment: Please answer all ' + totalQuestions + ' questions before submitting.');
-                return false;
-            }
-
-            // Prevent double submission
-            var finalSubmit = document.getElementById('finalSubmitBtn');
-            if (finalSubmit) {
-                finalSubmit.disabled = true;
-                finalSubmit.innerHTML = 'Computing Recommendations...';
-            }
-            return true;
-        });
-    }
-
-    // Initialize first step
-    updateStepView();
-}
-
-/* --------------------------------------------------------------------------
-   Client-Side Form Validations
-   -------------------------------------------------------------------------- */
-function initFormValidations() {
-    var regForm = document.getElementById('registerForm');
-    if (regForm) {
-        regForm.addEventListener('submit', function (e) {
-            var password = document.getElementById('password').value;
-            var confirmPassword = document.getElementById('confirmPassword').value;
-            var email = document.getElementById('email').value;
-
-            if (password !== confirmPassword) {
-                e.preventDefault();
-                alert('Passwords do not match. Please verify your password confirmation.');
-                return false;
-            }
-
-            if (password.length < 6) {
-                e.preventDefault();
-                alert('Password must be at least 6 characters long.');
-                return false;
-            }
-
-            var emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$/;
-            if (!emailPattern.test(email)) {
-                e.preventDefault();
-                alert('Please enter a valid email address.');
-                return false;
-            }
-        });
-    }
-}
-
-/* --------------------------------------------------------------------------
-   Modal Dialog Management
-   -------------------------------------------------------------------------- */
-function initModals() {
-    // Close button triggers
-    document.querySelectorAll('.modal-close, .modal-cancel-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var modal = this.closest('.modal-overlay');
-            if (modal) {
-                modal.classList.remove('active');
-            }
-        });
-    });
-
-    // Close when clicking outside modal box
-    document.querySelectorAll('.modal-overlay').forEach(function (modal) {
-        modal.addEventListener('click', function (e) {
-            if (e.target === this) {
-                this.classList.remove('active');
-            }
-        });
-    });
-}
-
-function openModal(modalId) {
-    var modal = document.getElementById(modalId);
-    if (modal) modal.classList.add('active');
-}
-
-function closeModal(modalId) {
-    var modal = document.getElementById(modalId);
-    if (modal) modal.classList.remove('active');
-}
+// Initialize session and navbar once DOM is loaded
+document.addEventListener('DOMContentLoaded', function () {
+    CareerApp.initSessionNavbar();
+    CareerApp.initModals();
+});

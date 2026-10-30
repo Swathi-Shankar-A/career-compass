@@ -2,6 +2,7 @@ package com.career.servlet;
 
 import com.career.model.Student;
 import com.career.service.AuthService;
+import com.career.util.JsonUtil;
 import com.career.util.SecurityUtil;
 
 import java.io.IOException;
@@ -33,16 +34,24 @@ public class LoginServlet extends HttpServlet {
         }
 
         SecurityUtil.getOrCreateCsrfToken(request);
-        request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/login.html").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        boolean isJson = (accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format);
+
         // CSRF Check
         if (!SecurityUtil.validateCsrfToken(request)) {
-            request.setAttribute("errorMessage", "Session security validation failed. Please try logging in again.");
-            request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Session security validation failed. Please refresh and try again."));
+                return;
+            }
+            response.sendRedirect(request.getContextPath() + "/login?error=csrf");
             return;
         }
 
@@ -50,9 +59,12 @@ public class LoginServlet extends HttpServlet {
         String password = request.getParameter("password");
 
         if (email == null || email.trim().isEmpty() || password == null || password.isEmpty()) {
-            request.setAttribute("errorMessage", "Please enter both your email address and password.");
-            request.setAttribute("email", email);
-            request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Please enter both your email address and password."));
+                return;
+            }
+            response.sendRedirect(request.getContextPath() + "/login?error=empty_fields");
             return;
         }
 
@@ -76,12 +88,19 @@ public class LoginServlet extends HttpServlet {
             // Initialize new CSRF token for the authenticated session
             SecurityUtil.getOrCreateCsrfToken(request);
 
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(true, "Authentication successful.", request.getContextPath() + "/student/dashboard"));
+                return;
+            }
             response.sendRedirect(request.getContextPath() + "/student/dashboard");
         } else {
-            // Safe generic error message without revealing whether the email exists
-            request.setAttribute("errorMessage", "Invalid email or password. Please verify your credentials and try again.");
-            request.setAttribute("email", email);
-            request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Invalid email or password. Please verify your credentials and try again."));
+                return;
+            }
+            response.sendRedirect(request.getContextPath() + "/login?error=invalid_credentials");
         }
     }
 }

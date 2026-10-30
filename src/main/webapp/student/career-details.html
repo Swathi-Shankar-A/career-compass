@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Roadmap &amp; Details - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container container-narrow">
+        <div style="margin-bottom: 1.5rem;">
+            <a href="javascript:history.back()" class="btn btn-secondary btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back</span>
+            </a>
+        </div>
+
+        <div id="careerDetailsContainer">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <div>Loading career roadmap and topic mappings...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const params = new URLSearchParams(window.location.search);
+    const careerId = params.get('id');
+    const container = document.getElementById('careerDetailsContainer');
+
+    if (!careerId) {
+        window.location.href = 'dashboard';
+        return;
+    }
+
+    const res = await CareerApp.fetchJson(ctx + '/student/career-details?id=' + encodeURIComponent(careerId) + '&format=json');
+    if (!res || !res.success || !res.career) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <div>${CareerApp.escapeHtml(res ? res.message : 'Career details could not be found.')}</div>
+            </div>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <a href="dashboard" class="btn btn-secondary">Return to Dashboard</a>
+            </div>`;
+        return;
+    }
+
+    const c = res.career;
+    document.title = `${c.name} - Career Roadmap & Details`;
+
+    const skills = (c.skillsRequired || '').split(',').map(s => s.trim()).filter(Boolean);
+    const tools = (c.toolsTechnologies || '').split(',').map(t => t.trim()).filter(Boolean);
+    const mappings = c.mappings || [];
+
+    container.innerHTML = `
+        <div class="card fade-in" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <span class="badge badge-blue" style="margin-bottom: 0.5rem;">Career Path #${c.id}</span>
+                    <h1 style="font-size: 2rem; color: var(--navy-900); font-weight: 800;">
+                        ${CareerApp.escapeHtml(c.name)}
+                    </h1>
+                </div>
+                <span class="badge badge-teal">B.Tech CSE Specialization</span>
+            </div>
+
+            <p style="color: var(--slate-700); font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem;">
+                ${CareerApp.escapeHtml(c.shortDescription)}
+            </p>
+
+            <!-- Responsibilities -->
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.15rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.5rem;">
+                    Typical Industry Responsibilities
+                </h3>
+                <p style="color: var(--slate-700); font-size: 0.95rem; line-height: 1.7; background: var(--slate-50); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--blue-600);">
+                    ${CareerApp.escapeHtml(c.responsibilities)}
+                </p>
+            </div>
+
+            <!-- Skills -->
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.15rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.5rem;">
+                    Required Technical &amp; Professional Skills
+                </h3>
+                <div class="rec-chips-group">
+                    ${skills.map(s => `<span class="chip" style="font-size: 0.9rem; padding: 0.35rem 0.75rem;">${CareerApp.escapeHtml(s)}</span>`).join('')}
+                </div>
+            </div>
+
+            <!-- Tools -->
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.15rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.5rem;">
+                    Recommended Tools &amp; Technologies
+                </h3>
+                <div class="rec-chips-group">
+                    ${tools.map(t => `<span class="chip chip-tool" style="font-size: 0.9rem; padding: 0.35rem 0.75rem;">${CareerApp.escapeHtml(t)}</span>`).join('')}
+                </div>
+            </div>
+
+            <!-- Beginner Roadmap -->
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.15rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.5rem;">
+                    Beginner-Friendly Learning Roadmap
+                </h3>
+                <div style="background: var(--teal-50); border: 1px solid var(--teal-100); border-radius: var(--radius-md); padding: 1rem; color: var(--teal-700); font-size: 0.95rem; line-height: 1.6;">
+                    <strong>Next Step for Undergraduates:</strong> ${CareerApp.escapeHtml(c.learningSuggestions)}
+                </div>
+            </div>
+
+            <!-- Mapped Assessment Questions -->
+            ${mappings.length > 0 ? `
+                <div style="margin-top: 2rem; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.75rem;">
+                        Assessment Topic Weightings for this Career
+                    </h3>
+                    <p style="color: var(--slate-500); font-size: 0.85rem; margin-bottom: 1rem;">
+                        These are the specific questions mapped in our recommendation engine that determine your compatibility score for this path:
+                    </p>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Assessment Question</th>
+                                    <th style="width: 130px; text-align: center;">Algorithm Weight</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${mappings.map(m => `
+                                    <tr>
+                                        <td><span class="badge badge-slate">${CareerApp.escapeHtml(m.category || 'General')}</span></td>
+                                        <td style="font-size: 0.9rem;">${CareerApp.escapeHtml(m.questionText)}</td>
+                                        <td style="text-align: center;">
+                                            <span class="badge ${m.weight >= 2.5 ? 'badge-teal' : 'badge-blue'}">${m.weight.toFixed(1)}x Weight</span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+});
+</script>
+</body>
+</html>

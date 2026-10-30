@@ -2,6 +2,7 @@ package com.career.servlet;
 
 import com.career.dao.CareerDAO;
 import com.career.model.Career;
+import com.career.util.JsonUtil;
 import com.career.util.SecurityUtil;
 
 import java.io.IOException;
@@ -28,26 +29,49 @@ public class AdminCareersServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String careerIdStr = request.getParameter("id");
+        Career selectedCareer = null;
         if (careerIdStr != null && !careerIdStr.trim().isEmpty()) {
             try {
                 int cId = Integer.parseInt(careerIdStr.trim());
-                Career career = careerDAO.getCareerById(cId);
-                request.setAttribute("selectedCareer", career);
+                selectedCareer = careerDAO.getCareerById(cId);
+                request.setAttribute("selectedCareer", selectedCareer);
             } catch (NumberFormatException ignored) {}
         }
 
         List<Career> careers = careerDAO.getAllCareers();
         SecurityUtil.getOrCreateCsrfToken(request);
 
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        if ((accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format)) {
+            response.setContentType("application/json;charset=UTF-8");
+            StringBuilder sb = new StringBuilder("{");
+            sb.append("\"totalCareers\":").append(careers.size()).append(",");
+            sb.append("\"selectedCareer\":").append(selectedCareer != null ? JsonUtil.toJson(selectedCareer) : "null").append(",");
+            sb.append("\"careers\":").append(JsonUtil.careersToJson(careers));
+            sb.append("}");
+            response.getWriter().write(sb.toString());
+            return;
+        }
+
         request.setAttribute("careers", careers);
         request.setAttribute("totalCareers", careers.size());
-        request.getRequestDispatcher("/WEB-INF/views/admin/careers.jsp").forward(request, response);
+        request.getRequestDispatcher("/admin/careers.html").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        boolean isJson = (accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format);
+
         if (!SecurityUtil.validateCsrfToken(request)) {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Session security validation failed. Please refresh and try again."));
+                return;
+            }
             request.setAttribute("errorMessage", "Session security validation failed.");
             doGet(request, response);
             return;
@@ -72,12 +96,22 @@ public class AdminCareersServlet extends HttpServlet {
 
                 boolean success = careerDAO.updateCareer(career);
                 if (success) {
+                    if (isJson) {
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write(JsonUtil.response(true, "Career profile updated successfully.", request.getContextPath() + "/admin/careers?id=" + id + "&success=updated"));
+                        return;
+                    }
                     response.sendRedirect(request.getContextPath() + "/admin/careers?id=" + id + "&success=updated");
                     return;
                 }
             } catch (NumberFormatException ignored) {}
         }
 
+        if (isJson) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(JsonUtil.response(false, "Failed to update career."));
+            return;
+        }
         response.sendRedirect(request.getContextPath() + "/admin/careers");
     }
 }

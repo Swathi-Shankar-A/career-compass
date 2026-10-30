@@ -38,6 +38,13 @@ public class StudentAuthFilter implements Filter {
         String role = (session != null) ? (String) session.getAttribute("userRole") : null;
 
         if (student == null || !"STUDENT".equals(role)) {
+            String accept = req.getHeader("Accept");
+            if (accept != null && accept.contains("application/json")) {
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.setContentType("application/json;charset=UTF-8");
+                res.getWriter().write("{\"authenticated\":false,\"redirect\":\"" + req.getContextPath() + "/login?error=auth_required\"}");
+                return;
+            }
             // Unauthenticated or invalid role -> redirect to student login
             res.sendRedirect(req.getContextPath() + "/login?error=auth_required");
             return;

@@ -3,6 +3,7 @@ package com.career.servlet;
 import com.career.dao.AssessmentDAO;
 import com.career.model.AssessmentSubmission;
 import com.career.model.Student;
+import com.career.util.JsonUtil;
 
 import java.io.IOException;
 import java.util.List;
@@ -32,7 +33,15 @@ public class StudentHistoryServlet extends HttpServlet {
 
         List<AssessmentSubmission> history = assessmentDAO.getSubmissionsByStudentId(student.getId());
 
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        if ((accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format)) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"success\":true,\"history\":" + JsonUtil.submissionsToJson(history) + "}");
+            return;
+        }
+
         request.setAttribute("history", history);
-        request.getRequestDispatcher("/WEB-INF/views/student/history.jsp").forward(request, response);
+        request.getRequestDispatcher("/student/history.html").forward(request, response);
     }
 }

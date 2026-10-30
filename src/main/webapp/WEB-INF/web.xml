@@ -9,7 +9,7 @@
 
     <!-- Welcome File -->
     <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
     </welcome-file-list>
 
     <!-- Session Configuration -->
@@ -48,6 +48,16 @@
     <!-- =================================================================== -->
     <!-- PUBLIC & AUTH SERVLETS                                              -->
     <!-- =================================================================== -->
+
+    <!-- Session Status API -->
+    <servlet>
+        <servlet-name>SessionServlet</servlet-name>
+        <servlet-class>com.career.servlet.SessionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SessionServlet</servlet-name>
+        <url-pattern>/api/session</url-pattern>
+    </servlet-mapping>
 
     <!-- Home Servlet -->
     <servlet>
@@ -233,17 +243,17 @@
 
     <error-page>
         <error-code>404</error-code>
-        <location>/WEB-INF/views/errors/404.jsp</location>
+        <location>/errors/404.html</location>
     </error-page>
 
     <error-page>
         <error-code>403</error-code>
-        <location>/WEB-INF/views/errors/403.jsp</location>
+        <location>/errors/403.html</location>
     </error-page>
 
     <error-page>
         <error-code>500</error-code>
-        <location>/WEB-INF/views/errors/500.jsp</location>
+        <location>/errors/500.html</location>
     </error-page>
 
 </web-app>

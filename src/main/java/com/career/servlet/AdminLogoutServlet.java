@@ -1,5 +1,7 @@
 package com.career.servlet;
 
+import com.career.util.JsonUtil;
+
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -19,6 +21,15 @@ public class AdminLogoutServlet extends HttpServlet {
         if (session != null) {
             session.invalidate();
         }
+
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        if ((accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format)) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(JsonUtil.response(true, "Admin logged out successfully.", request.getContextPath() + "/admin/login?logged_out=true"));
+            return;
+        }
+
         response.sendRedirect(request.getContextPath() + "/admin/login?logged_out=true");
     }
 

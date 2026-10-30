@@ -8,6 +8,7 @@ import com.career.model.Student;
 import com.career.model.StudentResponse;
 import com.career.service.QuestionService;
 import com.career.service.RecommendationEngine;
+import com.career.util.JsonUtil;
 import com.career.util.SecurityUtil;
 
 import java.io.IOException;
@@ -24,7 +25,7 @@ import javax.servlet.http.HttpSession;
 
 /**
  * Handles the 20-question career assessment flow:
- * GET: Serves the questions from MySQL with progress navigation
+ * GET: Serves the questions HTML page or JSON questions list.
  * POST: Evaluates responses, computes recommendations, and saves in database transaction.
  */
 public class AssessmentServlet extends HttpServlet {
@@ -43,29 +44,58 @@ public class AssessmentServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        boolean isJson = (accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format);
+
         // Enforce the requirement: Exactly 20 active questions must be configured
         if (!questionService.isAssessmentReady()) {
             int activeCount = questionService.getActiveQuestionsCount();
-            request.setAttribute("errorMessage",
-                    "The assessment is temporarily unavailable because exactly 20 active questions are required. Currently active: "
-                    + activeCount + ". Please check back shortly.");
-            request.getRequestDispatcher("/WEB-INF/views/student/dashboard.jsp").forward(request, response);
+            String errorMsg = "The assessment is temporarily unavailable because exactly 20 active questions are required. Currently active: "
+                    + activeCount + ". Please check back shortly.";
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"ready\":false,\"activeCount\":" + activeCount + ",\"message\":\"" + JsonUtil.escape(errorMsg) + "\"}");
+                return;
+            }
+            request.setAttribute("errorMessage", errorMsg);
+            request.getRequestDispatcher("/student/dashboard.html").forward(request, response);
             return;
         }
 
         List<Question> questions = questionService.getActiveQuestions();
         SecurityUtil.getOrCreateCsrfToken(request);
 
+        if (isJson) {
+            response.setContentType("application/json;charset=UTF-8");
+            StringBuilder sb = new StringBuilder("{");
+            sb.append("\"ready\":true,");
+            sb.append("\"totalQuestions\":").append(questions.size()).append(",");
+            sb.append("\"questions\":").append(JsonUtil.questionsToJson(questions));
+            sb.append("}");
+            response.getWriter().write(sb.toString());
+            return;
+        }
+
         request.setAttribute("questions", questions);
         request.setAttribute("totalQuestions", questions.size());
-        request.getRequestDispatcher("/WEB-INF/views/student/assessment.jsp").forward(request, response);
+        request.getRequestDispatcher("/student/assessment.html").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        boolean isJson = (accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format);
+
         // 1. CSRF token validation
         if (!SecurityUtil.validateCsrfToken(request)) {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Session security validation failed. Please refresh and try again."));
+                return;
+            }
             request.setAttribute("errorMessage", "Session security validation failed. Please try submitting again.");
             doGet(request, response);
             return;
@@ -77,7 +107,13 @@ public class AssessmentServlet extends HttpServlet {
         // 2. Load active questions from database
         List<Question> questions = questionService.getActiveQuestions();
         if (questions.size() != QuestionService.REQUIRED_ACTIVE_QUESTIONS) {
-            request.setAttribute("errorMessage", "Assessment configuration error: exactly 20 active questions are required.");
+            String msg = "Assessment configuration error: exactly 20 active questions are required.";
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, msg));
+                return;
+            }
+            request.setAttribute("errorMessage", msg);
             doGet(request, response);
             return;
         }
@@ -130,12 +166,18 @@ public class AssessmentServlet extends HttpServlet {
 
         // 3. Validation: Reject incomplete assessments
         if (!unansweredQuestions.isEmpty()) {
-            request.setAttribute("errorMessage", "Please complete all 20 questions before submitting. Unanswered question(s): "
-                    + unansweredQuestions.toString());
+            String errorMsg = "Please complete all 20 questions before submitting. Unanswered topic(s): "
+                    + unansweredQuestions.toString();
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, errorMsg));
+                return;
+            }
+            request.setAttribute("errorMessage", errorMsg);
             request.setAttribute("questions", questions);
             request.setAttribute("totalQuestions", questions.size());
             request.setAttribute("previousAnswers", ratings);
-            request.getRequestDispatcher("/WEB-INF/views/student/assessment.jsp").forward(request, response);
+            request.getRequestDispatcher("/student/assessment.html").forward(request, response);
             return;
         }
 
@@ -150,14 +192,30 @@ public class AssessmentServlet extends HttpServlet {
                     student.getId(), summary, responseSnapshots, recommendations);
 
             if (submissionId > 0) {
-                // Successful submission -> redirect to results page
-                response.sendRedirect(request.getContextPath() + "/student/results?submissionId=" + submissionId);
+                String resultsUrl = request.getContextPath() + "/student/results?submissionId=" + submissionId;
+                if (isJson) {
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":true,\"submissionId\":" + submissionId + ",\"redirect\":\"" + resultsUrl + "\"}");
+                    return;
+                }
+                response.sendRedirect(resultsUrl);
             } else {
+                if (isJson) {
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write(JsonUtil.response(false, "Database transaction failed. Please retry your submission."));
+                    return;
+                }
                 request.setAttribute("errorMessage", "Database transaction failed. Please retry your submission.");
                 doGet(request, response);
             }
         } catch (SQLException e) {
-            request.setAttribute("errorMessage", "An error occurred while saving your assessment: " + e.getMessage());
+            String errMsg = "An error occurred while saving your assessment: " + e.getMessage();
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, errMsg));
+                return;
+            }
+            request.setAttribute("errorMessage", errMsg);
             doGet(request, response);
         }
     }

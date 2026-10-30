@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container">
+        <!-- Admin Top Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+            <div>
+                <span class="badge badge-teal" style="margin-bottom: 0.5rem;">System Administration</span>
+                <h1 style="font-size: 2rem; color: var(--navy-900); font-weight: 800;">
+                    Administrator Control Center
+                </h1>
+                <p style="color: var(--slate-600); font-size: 0.95rem;">
+                    Live database metrics, assessment integrity sentinel, and student response auditing.
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <a href="questions" class="btn btn-primary btn-sm">Manage Questions</a>
+                <a href="students" class="btn btn-secondary btn-sm">Student Responses</a>
+                <a href="careers" class="btn btn-secondary btn-sm">Careers (35)</a>
+            </div>
+        </div>
+
+        <!-- Integrity Sentinel Alert -->
+        <div id="integritySentinelBox"></div>
+
+        <!-- Database Metrics Cards -->
+        <div class="admin-metrics-grid" style="margin-bottom: 2.5rem;">
+            <div class="metric-card">
+                <div class="metric-icon metric-icon-blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-value" id="metricTotalStudents">...</div>
+                    <div class="metric-label">Registered Students</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon metric-icon-teal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-value" id="metricTotalSubmissions">...</div>
+                    <div class="metric-label">Total Submissions</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon metric-icon-navy" id="metricQuestionIcon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-value" id="metricActiveQuestions">...</div>
+                    <div class="metric-label">Active Assessment Topics</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon metric-icon-amber">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-value" id="metricTotalCareers">...</div>
+                    <div class="metric-label">CSE Career Profiles Seeded</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Submissions Table Card -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <div>
+                    <h2 style="font-size: 1.25rem; color: var(--navy-900); font-weight: 700;">
+                        Recent Student Assessments
+                    </h2>
+                    <p style="color: var(--slate-500); font-size: 0.85rem; margin-top: 0.2rem;">
+                        Latest submissions recorded in MySQL with generated recommendations.
+                    </p>
+                </div>
+                <a href="students" class="btn btn-secondary btn-sm">View All Students</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Sub #</th>
+                            <th>Student Name</th>
+                            <th>Academic Details</th>
+                            <th>Top Recommended Match</th>
+                            <th>Score</th>
+                            <th>Date</th>
+                            <th style="text-align: right; width: 140px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentSubmissionsTableBody">
+                        <tr>
+                            <td colspan="7" class="loading-state">
+                                <div class="spinner"></div>
+                                <div>Loading recent assessment data...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Administrator Access Portal.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const sentinelBox = document.getElementById('integritySentinelBox');
+    const tableBody = document.getElementById('recentSubmissionsTableBody');
+
+    const res = await CareerApp.fetchJson(ctx + '/admin/dashboard?format=json');
+    if (!res) return;
+
+    document.getElementById('metricTotalStudents').textContent = res.totalStudents || 0;
+    document.getElementById('metricTotalSubmissions').textContent = res.totalSubmissions || 0;
+    document.getElementById('metricActiveQuestions').textContent = res.activeQuestions || 0;
+    document.getElementById('metricTotalCareers').textContent = res.totalCareers || 35;
+
+    // Integrity Sentinel check: exactly 20 active questions
+    if (!res.questionCountValid) {
+        sentinelBox.innerHTML = `
+            <div class="alert alert-warning" role="alert" style="border-left: 4px solid var(--warning-600); margin-bottom: 2rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <div>
+                    <strong>Assessment System Notice:</strong> Exactly 20 active questions are required for the standard career assessment. Currently active: <strong>${res.activeQuestions}</strong>. 
+                    New student assessments are paused until exactly 20 questions are active.
+                    <a href="questions" style="text-decoration: underline; font-weight: 600; margin-left: 0.5rem;">Configure Questions</a>
+                </div>
+            </div>`;
+        document.getElementById('metricQuestionIcon').className = 'metric-icon metric-icon-amber';
+    } else {
+        sentinelBox.innerHTML = `
+            <div class="alert alert-success" style="margin-bottom: 2rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <div>Integrity check passed: Exactly <strong>20 active questions</strong> configured. Student assessments are open.</div>
+            </div>`;
+    }
+
+    const recents = res.recentSubmissions || [];
+    if (recents.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No student assessments submitted yet.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = recents.map(sub => {
+        const topRec = (sub.recommendations && sub.recommendations.length > 0) ? sub.recommendations[0] : null;
+        const cName = topRec && topRec.career ? topRec.career.name : 'Completed';
+        const score = topRec ? topRec.compatibilityScore : null;
+
+        return `
+            <tr>
+                <td><strong>#${sub.id}</strong></td>
+                <td>
+                    <strong>${CareerApp.escapeHtml(sub.studentName || 'Student')}</strong>
+                    <div style="font-size: 0.8rem; color: var(--slate-500);">${CareerApp.escapeHtml(sub.studentEmail || '')}</div>
+                </td>
+                <td style="font-size: 0.85rem;">
+                    <div>${CareerApp.escapeHtml(sub.studentCollege || '')}</div>
+                    <div style="color: var(--slate-500);">${CareerApp.escapeHtml(sub.studentDegree || '')} • Yr ${sub.studentYear || 1}</div>
+                </td>
+                <td>
+                    <span class="badge badge-teal">${CareerApp.escapeHtml(cName)}</span>
+                </td>
+                <td>
+                    ${score !== null ? `<strong style="color: var(--teal-700);">${score}%</strong>` : 'N/A'}
+                </td>
+                <td style="font-size: 0.85rem; color: var(--slate-500);">${sub.submissionDate || ''}</td>
+                <td style="text-align: right;">
+                    <a href="student-responses?submissionId=${sub.id}" class="btn btn-outline-primary btn-sm">
+                        Inspect
+                    </a>
+                </td>
+            </tr>
+        `;
+    }).join('');
+});
+</script>
+</body>
+</html>

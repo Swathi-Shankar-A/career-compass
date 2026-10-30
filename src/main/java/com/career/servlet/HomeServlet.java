@@ -2,6 +2,7 @@ package com.career.servlet;
 
 import com.career.dao.CareerDAO;
 import com.career.model.Career;
+import com.career.util.JsonUtil;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,9 +26,17 @@ public class HomeServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Load a selection of featured careers for landing page display
         List<Career> careers = careerDAO.getActiveCareers();
+
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        if ((accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format)) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"featuredCareers\":" + JsonUtil.careersToJson(careers) + "}");
+            return;
+        }
+
         request.setAttribute("featuredCareers", careers);
-        request.getRequestDispatcher("/index.jsp").forward(request, response);
+        request.getRequestDispatcher("/index.html").forward(request, response);
     }
 }

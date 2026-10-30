@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Login - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="auth-wrapper">
+        <div class="auth-card" style="border-top: 4px solid var(--teal-600);">
+            <div class="auth-header">
+                <span class="badge badge-teal" style="margin-bottom: 0.5rem;">Restricted Portal</span>
+                <h1>Administrator Login</h1>
+                <p>Authorized access for managing questions, reviewing student submissions, and system configuration.</p>
+            </div>
+
+            <div id="adminAlertContainer"></div>
+
+            <form action="login" method="POST" id="adminLoginForm" novalidate>
+                <input type="hidden" name="csrfToken" id="csrfToken">
+
+                <div class="form-group">
+                    <label for="usernameOrEmail" class="form-label">Admin Username or Email</label>
+                    <input type="text" id="usernameOrEmail" name="usernameOrEmail" class="form-control"
+                           placeholder="e.g. admin" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Admin Password</label>
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="Enter admin password" required>
+                </div>
+
+                <button type="submit" class="btn btn-navy btn-block btn-lg" id="submitAdminLoginBtn" style="margin-top: 1.5rem;">
+                    Authenticate Administrator
+                </button>
+            </form>
+
+            <div class="auth-footer" style="font-size: 0.85rem; color: var(--slate-500);">
+                Student looking to take an assessment? <a href="../login">Student Portal</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const alertBox = document.getElementById('adminAlertContainer');
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('logged_out') === 'true') {
+        alertBox.innerHTML = `
+            <div class="alert alert-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <div>Administrator logged out successfully.</div>
+            </div>`;
+    } else if (params.get('error') === 'admin_auth_required') {
+        alertBox.innerHTML = `
+            <div class="alert alert-warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div>Administrator credentials required to access the admin area.</div>
+            </div>`;
+    }
+
+    const form = document.getElementById('adminLoginForm');
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitAdminLoginBtn');
+        const usernameOrEmail = document.getElementById('usernameOrEmail').value.trim();
+        const password = document.getElementById('password').value;
+        const csrfToken = document.getElementById('csrfToken').value;
+
+        if (!usernameOrEmail || !password) {
+            alertBox.innerHTML = `
+                <div class="alert alert-danger">
+                    <div>Please provide administrator username/email and password.</div>
+                </div>`;
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Authenticating...';
+
+        const bodyData = new URLSearchParams();
+        bodyData.append('usernameOrEmail', usernameOrEmail);
+        bodyData.append('password', password);
+        bodyData.append('csrfToken', csrfToken);
+
+        const res = await CareerApp.fetchJson(ctx + '/admin/login', {
+            method: 'POST',
+            body: bodyData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Authenticate Administrator';
+
+        if (res && res.success) {
+            window.location.href = res.redirect || (ctx + '/admin/dashboard');
+        } else {
+            alertBox.innerHTML = `
+                <div class="alert alert-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div>${CareerApp.escapeHtml(res ? res.message : 'Invalid administrator credentials.')}</div>
+                </div>`;
+        }
+    });
+});
+</script>
+</body>
+</html>

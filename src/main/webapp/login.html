@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - Career Recommendation System</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="./" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Student Login</h1>
+                <p>Access your student portal, take assessments, and review past recommendations.</p>
+            </div>
+
+            <!-- Dynamic Alert Notices -->
+            <div id="authAlertContainer"></div>
+
+            <form action="login" method="POST" id="studentLoginForm" novalidate>
+                <input type="hidden" name="csrfToken" id="csrfToken">
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control"
+                           placeholder="student@college.edu" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitLoginBtn" style="margin-top: 1.5rem;">
+                    Sign In to Student Portal
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Don't have an account yet? <a href="register">Register as Student</a>
+                <div style="margin-top: 0.75rem; font-size: 0.8rem;">
+                    Looking for administrative access? <a href="admin/login">Admin Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const params = new URLSearchParams(window.location.search);
+    const alertBox = document.getElementById('authAlertContainer');
+
+    if (params.get('registered') === 'true') {
+        alertBox.innerHTML = `
+            <div class="alert alert-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <div>Registration completed successfully! Please sign in with your credentials.</div>
+            </div>`;
+    } else if (params.get('logged_out') === 'true') {
+        alertBox.innerHTML = `
+            <div class="alert alert-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <div>You have been safely logged out.</div>
+            </div>`;
+    } else if (params.get('error') === 'auth_required') {
+        alertBox.innerHTML = `
+            <div class="alert alert-warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div>Please sign in to access student features.</div>
+            </div>`;
+    }
+
+    const form = document.getElementById('studentLoginForm');
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitLoginBtn');
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const csrfToken = document.getElementById('csrfToken').value;
+
+        if (!email || !password) {
+            alertBox.innerHTML = `
+                <div class="alert alert-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div>Please enter both your email address and password.</div>
+                </div>`;
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Authenticating...';
+
+        const bodyData = new URLSearchParams();
+        bodyData.append('email', email);
+        bodyData.append('password', password);
+        bodyData.append('csrfToken', csrfToken);
+
+        const res = await CareerApp.fetchJson(ctx + '/login', {
+            method: 'POST',
+            body: bodyData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In to Student Portal';
+
+        if (res && res.success) {
+            window.location.href = res.redirect || (ctx + '/student/dashboard');
+        } else {
+            alertBox.innerHTML = `
+                <div class="alert alert-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div>${CareerApp.escapeHtml(res ? res.message : 'Invalid email or password.')}</div>
+                </div>`;
+        }
+    });
+});
+</script>
+</body>
+</html>

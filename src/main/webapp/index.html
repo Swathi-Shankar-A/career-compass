@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Recommendation System for B.Tech CSE Students</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="./" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container hero-content">
+            <div class="hero-pill">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span>Engineered specifically for B.Tech Computer Science Students</span>
+            </div>
+
+            <h1 class="hero-title">
+                Discover the Career <br><span class="text-gradient">That Fits You</span>
+            </h1>
+
+            <p class="hero-description">
+                Evaluate your technical inclinations, problem-solving preferences, and engineering interests through a structured 20-question assessment. Get deterministic, explainable career recommendations backed by an algorithmic compatibility scoring model.
+            </p>
+
+            <div class="hero-buttons">
+                <a href="register" class="btn btn-primary btn-lg">
+                    <span>Get Started Free</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+                <a href="login" class="btn btn-outline-white btn-lg">
+                    Student Login
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section style="padding: 4.5rem 0 3.5rem 0;">
+        <div class="container">
+            <div class="section-header">
+                <span class="badge badge-blue" style="margin-bottom: 0.75rem;">Structured Methodology</span>
+                <h2 class="section-title">How It Works</h2>
+                <p class="section-subtitle">
+                    A simple three-step process designed to help CSE students explore industry paths without coding aptitude tests or complex psychological puzzles.
+                </p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">Create Your Student Profile</h3>
+                    <p style="color: var(--slate-600); font-size: 0.95rem;">
+                        Sign up with your academic details, including your college, degree specialization, and current year of study.
+                    </p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">Take the 20-Question Assessment</h3>
+                    <p style="color: var(--slate-600); font-size: 0.95rem;">
+                        Rate your interest across 20 distinct computer science disciplines on a straightforward 4-point scale from "Very interested" to "Not very interested".
+                    </p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">Receive Your Top 5 Career Matches</h3>
+                    <p style="color: var(--slate-600); font-size: 0.95rem;">
+                        Our deterministic scoring engine calculates weighted compatibility scores for 35 distinct careers, presenting skills, tools, and personalized reasons.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Career Categories & Explore Section -->
+    <section style="background: var(--slate-100); padding: 4.5rem 0;">
+        <div class="container">
+            <div class="section-header">
+                <span class="badge badge-teal" style="margin-bottom: 0.75rem;">35 Seeded Career Profiles</span>
+                <h2 class="section-title">Explore Computing Career Pathways</h2>
+                <p class="section-subtitle">
+                    Covering software development, data science, artificial intelligence, cybersecurity, cloud infrastructure, quality assurance, and project coordination.
+                </p>
+            </div>
+
+            <div class="careers-grid" id="featuredCareersGrid">
+                <div class="loading-state" style="grid-column: 1 / -1;">
+                    <div class="spinner"></div>
+                    <div>Loading career profiles from database...</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="register" class="btn btn-primary btn-lg">
+                    <span>Take the Assessment to Find Your Match</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3>CareerCompass CSE</h3>
+                <p style="color: var(--slate-400); font-size: 0.9rem; line-height: 1.6; margin-top: 0.5rem;">
+                    A deterministic, beginner-friendly career guidance and recommendation platform tailored for B.Tech Computer Science &amp; Engineering undergraduates.
+                </p>
+                <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--slate-500);">
+                    Built with Core Java Servlets, HTML5, CSS3, Vanilla JS, JDBC &amp; MySQL.
+                </div>
+            </div>
+
+            <div class="footer-links">
+                <h4>Quick Navigation</h4>
+                <ul>
+                    <li><a href="./">Home</a></li>
+                    <li><a href="register">Student Registration</a></li>
+                    <li><a href="login">Student Portal</a></li>
+                    <li><a href="admin/login">Administrator Login</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-links">
+                <h4>Academic Domains</h4>
+                <ul>
+                    <li><span style="color: var(--slate-400);">Web &amp; Cloud Systems</span></li>
+                    <li><span style="color: var(--slate-400);">AI, ML &amp; Data Science</span></li>
+                    <li><span style="color: var(--slate-400);">Cybersecurity &amp; Networks</span></li>
+                    <li><span style="color: var(--slate-400);">Software Quality &amp; DevOps</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div>
+                &copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.
+            </div>
+            <div style="color: var(--slate-500); font-size: 0.8rem;">
+                Recommendation results are algorithmic guidance to help students explore options, not guarantees of employment.
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const grid = document.getElementById('featuredCareersGrid');
+
+    try {
+        const res = await CareerApp.fetchJson(ctx + '/home?format=json');
+        if (res && res.featuredCareers && res.featuredCareers.length > 0) {
+            const list = res.featuredCareers.slice(0, 6);
+            grid.innerHTML = list.map(c => `
+                <div class="career-preview-card">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <span class="badge badge-blue">Path #${c.id}</span>
+                            <span class="badge badge-slate">B.Tech CSE</span>
+                        </div>
+                        <h3 class="career-preview-title">${CareerApp.escapeHtml(c.name)}</h3>
+                        <p class="career-preview-desc">${CareerApp.escapeHtml(c.shortDescription)}</p>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--slate-400); font-weight: 700; margin-bottom: 0.4rem; letter-spacing: 0.05em;">Key Skills</div>
+                        <div class="rec-chips-group">
+                            ${(c.skillsRequired || '').split(',').slice(0, 3).map(s => `<span class="chip">${CareerApp.escapeHtml(s.trim())}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">No careers found.</div>`;
+        }
+    } catch (e) {
+        console.error('Error loading featured careers:', e);
+        grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">Unable to load careers at this time.</div>`;
+    }
+});
+</script>
+</body>
+</html>

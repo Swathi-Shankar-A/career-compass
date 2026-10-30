@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment History - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container container-narrow">
+        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <span class="badge badge-blue" style="margin-bottom: 0.5rem;">Historical Attempts</span>
+                <h1 style="font-size: 2rem; color: var(--navy-900); font-weight: 800;">
+                    Assessment History
+                </h1>
+                <p style="color: var(--slate-600); font-size: 0.95rem;">
+                    Review all your previous career assessments and see how your recommendations have shaped over time.
+                </p>
+            </div>
+
+            <div>
+                <a href="assessment" class="btn btn-primary">
+                    Take New Assessment
+                </a>
+            </div>
+        </div>
+
+        <div id="historyListContainer">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <div>Retrieving assessment submission history...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const container = document.getElementById('historyListContainer');
+
+    const res = await CareerApp.fetchJson(ctx + '/student/history?format=json');
+    if (!res || !res.history || res.history.length === 0) {
+        container.innerHTML = `
+            <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--blue-50); color: var(--blue-600); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 14 14"></polyline>
+                    </svg>
+                </div>
+                <h2 style="font-size: 1.3rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.5rem;">
+                    No Past Assessments Found
+                </h2>
+                <p style="color: var(--slate-600); max-width: 480px; margin: 0 auto 1.5rem auto; font-size: 0.95rem;">
+                    You haven't submitted any career assessments yet. Take our 20-question assessment to generate your personalized Top 5 career matches.
+                </p>
+                <a href="assessment" class="btn btn-primary">
+                    Take First Assessment
+                </a>
+            </div>`;
+        return;
+    }
+
+    const history = res.history;
+    let attemptNum = history.length;
+
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            ${history.map(sub => {
+                const topRec = (sub.recommendations && sub.recommendations.length > 0) ? sub.recommendations[0] : null;
+                const cName = topRec && topRec.career ? topRec.career.name : 'Completed Assessment';
+                const score = topRec ? topRec.compatibilityScore : null;
+
+                return `
+                    <div class="card card-hover fade-in" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem;">
+                                <span class="badge badge-teal">Attempt #${attemptNum--}</span>
+                                <span style="font-size: 0.85rem; color: var(--slate-500);">${sub.submissionDate || 'Recently'}</span>
+                            </div>
+
+                            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--navy-900); margin-bottom: 0.35rem;">
+                                Top Recommendation: ${CareerApp.escapeHtml(cName)}
+                            </h2>
+
+                            ${score !== null ? `
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--slate-600);">
+                                    <span>Compatibility Match:</span>
+                                    <strong style="color: var(--teal-700);">${score}%</strong>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div>
+                            <a href="results?submissionId=${sub.id}" class="btn btn-outline-primary btn-sm">
+                                <span>View Full Report</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+});
+</script>
+</body>
+</html>

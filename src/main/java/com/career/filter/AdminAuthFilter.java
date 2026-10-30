@@ -14,9 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 /**
- * Filter protecting all /admin/* routes.
- * Ensures only authenticated administrators with role 'ADMIN' can access admin functions.
- * Authenticated students attempting to access /admin/* are denied with HTTP 403.
+ * Filter protecting all /admin/* routes (excluding /admin/login).
+ * Ensures only authenticated administrators with role 'ADMIN' can access admin pages.
  */
 public class AdminAuthFilter implements Filter {
 
@@ -29,40 +28,34 @@ public class AdminAuthFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
-        String uri = req.getRequestURI();
-        String contextPath = req.getContextPath();
-        String relativePath = uri.substring(contextPath.length());
-
-        // Allow public access to the admin login page
-        if (relativePath.equals("/admin/login") || relativePath.equals("/admin/login.jsp")) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        // Prevent browser caching of admin dashboard and sensitive data
+        // Prevent browser caching of sensitive admin pages
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         res.setHeader("Pragma", "no-cache");
         res.setDateHeader("Expires", 0);
+
+        String path = req.getRequestURI();
+        if (path.endsWith("/admin/login") || path.endsWith("/admin/login.html")) {
+            chain.doFilter(request, response);
+            return;
+        }
 
         HttpSession session = req.getSession(false);
         Admin admin = (session != null) ? (Admin) session.getAttribute("adminUser") : null;
         String role = (session != null) ? (String) session.getAttribute("userRole") : null;
 
-        if (admin != null && "ADMIN".equals(role)) {
-            // Authorized administrator
-            chain.doFilter(request, response);
+        if (admin == null || !"ADMIN".equals(role)) {
+            String accept = req.getHeader("Accept");
+            if (accept != null && accept.contains("application/json")) {
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.setContentType("application/json;charset=UTF-8");
+                res.getWriter().write("{\"authenticated\":false,\"redirect\":\"" + req.getContextPath() + "/admin/login?error=admin_auth_required\"}");
+                return;
+            }
+            res.sendRedirect(req.getContextPath() + "/admin/login?error=admin_auth_required");
             return;
         }
 
-        // If logged in as student, block with HTTP 403 Forbidden
-        if (session != null && "STUDENT".equals(session.getAttribute("userRole"))) {
-            req.setAttribute("errorMessage", "Access Denied: Students are not authorized to view the Administrative portal.");
-            req.getRequestDispatcher("/WEB-INF/views/errors/403.jsp").forward(req, res);
-            return;
-        }
-
-        // Not logged in -> redirect to admin login
-        res.sendRedirect(contextPath + "/admin/login?error=admin_auth_required");
+        chain.doFilter(request, response);
     }
 
     @Override

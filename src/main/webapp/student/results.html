@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Top 5 Career Matches - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header no-print">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container">
+        <!-- Top Action Bar (No-Print) -->
+        <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <a href="dashboard" class="btn btn-secondary btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back to Dashboard</span>
+            </a>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <a href="assessment" class="btn btn-outline-primary btn-sm">Retake Assessment</a>
+                <a href="history" class="btn btn-secondary btn-sm">Assessment History</a>
+                <button type="button" onclick="window.print()" class="btn btn-navy btn-sm">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    <span>Print Report</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="resultsAlertContainer"></div>
+
+        <!-- Results Hero Banner -->
+        <section class="results-hero">
+            <span class="badge badge-teal" style="margin-bottom: 0.75rem;">Algorithmic Recommendation Engine</span>
+            <h1>Your Top 5 Career Matches</h1>
+            <p class="results-summary-text" id="summaryNotesText">
+                Based on your ratings across 20 computer science disciplines, here are your five highest-scoring career pathways.
+            </p>
+            <div style="margin-top: 1.25rem; font-size: 0.85rem; color: var(--slate-300);" id="submissionMetaText">
+                Loading submission details...
+            </div>
+        </section>
+
+        <!-- Important Notice Disclaimer -->
+        <div class="alert alert-info no-print" style="margin-bottom: 2rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <div>
+                <strong>Guidance Note:</strong> Compatibility scores represent algorithmic alignment with your stated preferences across technical topics. These scores are designed for career discovery and academic exploration, not as a guarantee of future employment.
+            </div>
+        </div>
+
+        <!-- Recommendations List -->
+        <div class="recommendations-list" id="recommendationsListContainer">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <div>Calculating and formatting Top 5 career matches...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer no-print">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const params = new URLSearchParams(window.location.search);
+    const subId = params.get('submissionId');
+    const container = document.getElementById('recommendationsListContainer');
+    const alertBox = document.getElementById('resultsAlertContainer');
+
+    const url = ctx + '/student/results' + (subId ? '?submissionId=' + encodeURIComponent(subId) + '&format=json' : '?format=json');
+    const res = await CareerApp.fetchJson(url);
+
+    if (!res || !res.success || !res.submission) {
+        if (res && res.message === 'no_assessment') {
+            window.location.href = 'dashboard?msg=no_assessment';
+            return;
+        }
+        alertBox.innerHTML = `
+            <div class="alert alert-danger">
+                <div>${CareerApp.escapeHtml(res ? res.message : 'Could not retrieve recommendation results.')}</div>
+            </div>`;
+        container.innerHTML = `<div class="empty-state"><a href="dashboard" class="btn btn-secondary">Return to Dashboard</a></div>`;
+        return;
+    }
+
+    const sub = res.submission;
+    if (sub.summaryNotes) {
+        document.getElementById('summaryNotesText').textContent = sub.summaryNotes;
+    }
+    document.getElementById('submissionMetaText').innerHTML = 
+        `Assessment submitted on: <strong>${sub.submissionDate || 'Recently'}</strong> &bull; Evaluated against 35 standardized B.Tech CSE paths.`;
+
+    const recs = sub.recommendations || [];
+    if (recs.length === 0) {
+        container.innerHTML = `<div class="empty-state">No recommendations recorded for this submission.</div>`;
+        return;
+    }
+
+    container.innerHTML = recs.map(rec => {
+        const c = rec.career || {};
+        const skills = (c.skillsRequired || '').split(',').map(s => s.trim()).filter(Boolean);
+        const tools = (c.toolsTechnologies || '').split(',').map(t => t.trim()).filter(Boolean);
+
+        return `
+            <div class="rec-card fade-in">
+                <div class="rec-rank-circle">
+                    <div>#${rec.rankOrder}</div>
+                    <span>Rank</span>
+                </div>
+
+                <div class="rec-content">
+                    <div class="rec-header">
+                        <h2 class="rec-title">${CareerApp.escapeHtml(c.name || 'Career Match')}</h2>
+                        <div class="rec-score-pill">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                            <span>${rec.compatibilityScore}% Compatibility Match</span>
+                        </div>
+                    </div>
+
+                    <p class="rec-desc">${CareerApp.escapeHtml(c.shortDescription || '')}</p>
+
+                    <div class="rec-reason">
+                        <div style="font-weight: 700; color: var(--navy-900); margin-bottom: 0.25rem;">Why This Fits You:</div>
+                        <div>${CareerApp.escapeHtml(rec.matchReason || '')}</div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 0.35rem; letter-spacing: 0.05em;">Key Technical Skills</div>
+                        <div class="rec-chips-group">
+                            ${skills.map(s => `<span class="chip">${CareerApp.escapeHtml(s)}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 0.35rem; letter-spacing: 0.05em;">Industry Tools</div>
+                        <div class="rec-chips-group">
+                            ${tools.map(t => `<span class="chip chip-tool">${CareerApp.escapeHtml(t)}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    ${c.learningSuggestions ? `
+                        <div style="background: var(--teal-50); border: 1px solid var(--teal-100); border-radius: var(--radius-sm); padding: 0.75rem 1rem; color: var(--teal-700); font-size: 0.85rem; margin-bottom: 1.25rem;">
+                            <strong>Next Step for Undergraduates:</strong> ${CareerApp.escapeHtml(c.learningSuggestions)}
+                        </div>
+                    ` : ''}
+
+                    <div class="no-print" style="margin-top: 1rem; border-top: 1px solid var(--slate-100); padding-top: 1rem;">
+                        <a href="career-details?id=${c.id}" class="btn btn-outline-primary btn-sm">
+                            <span>View Complete Career Roadmap &amp; Mappings</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+});
+</script>
+</body>
+</html>

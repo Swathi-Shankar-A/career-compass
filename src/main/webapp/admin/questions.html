@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Management - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+            <div>
+                <span class="badge badge-teal" style="margin-bottom: 0.5rem;">Assessment Configuration</span>
+                <h1 style="font-size: 2rem; color: var(--navy-900); font-weight: 800;">
+                    Assessment Questions Management
+                </h1>
+                <p style="color: var(--slate-600); font-size: 0.95rem;">
+                    Maintain questions, edit option labels, and manage active status. <strong>Exactly 20 active questions</strong> are required for student assessments.
+                </p>
+            </div>
+
+            <div>
+                <button type="button" onclick="openModal('addQuestionModal')" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Add New Question</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="questionsAlertBox"></div>
+
+        <!-- Questions Table Card -->
+        <div class="card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">Order</th>
+                            <th>Category</th>
+                            <th>Question Text</th>
+                            <th style="width: 140px;">Active Status</th>
+                            <th style="text-align: right; width: 220px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="questionsTableBody">
+                        <tr>
+                            <td colspan="5" class="loading-state">
+                                <div class="spinner"></div>
+                                <div>Loading assessment questions...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add New Question -->
+    <div class="modal" id="addQuestionModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--navy-900);">Add New Assessment Question</h3>
+                <button type="button" class="modal-close" data-close-modal="addQuestionModal">&times;</button>
+            </div>
+            <form id="addQuestionForm" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" name="csrfToken" class="csrf-field">
+                    <input type="hidden" name="action" value="add">
+
+                    <div class="form-group">
+                        <label class="form-label">Question Text <span class="required">*</span></label>
+                        <textarea name="questionText" class="form-control" rows="2" placeholder="e.g. How interested are you in building user-facing web applications?" required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Category / Domain <span class="required">*</span></label>
+                            <input type="text" name="category" class="form-control" placeholder="e.g. Frontend Development" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Display Order</label>
+                            <input type="number" name="questionOrder" id="addQuestionOrderInput" class="form-control" value="21" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="isActive" value="true" checked>
+                            <span style="font-size: 0.95rem; font-weight: 600; color: var(--navy-900);">Active (Available in student assessment)</span>
+                        </label>
+                    </div>
+
+                    <h4 style="font-size: 1rem; color: var(--navy-900); margin: 1.25rem 0 0.5rem 0;">4 Selectable Options</h4>
+                    <div class="form-group">
+                        <label class="form-label">Option 4 (Rating: 4 - Highest Interest)</label>
+                        <input type="text" name="optionText_4" class="form-control" value="Very interested — I enjoy this and want to work on it daily" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Option 3 (Rating: 3 - Good Interest)</label>
+                        <input type="text" name="optionText_3" class="form-control" value="Interested — I find this appealing and open to learning" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Option 2 (Rating: 2 - Moderate Interest)</label>
+                        <input type="text" name="optionText_2" class="form-control" value="Slightly interested — neutral / basic exposure is fine" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Option 1 (Rating: 1 - Low Interest)</label>
+                        <input type="text" name="optionText_1" class="form-control" value="Not very interested — prefer avoiding this area" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-close-modal="addQuestionModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveNewQuestionBtn">Add Question &amp; Options</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Question -->
+    <div class="modal" id="editQuestionModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--navy-900);">Edit Assessment Question</h3>
+                <button type="button" class="modal-close" data-close-modal="editQuestionModal">&times;</button>
+            </div>
+            <form id="editQuestionForm" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" name="csrfToken" class="csrf-field">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="questionId" id="editQuestionId">
+
+                    <div class="form-group">
+                        <label class="form-label">Question Text <span class="required">*</span></label>
+                        <textarea name="questionText" id="editQuestionText" class="form-control" rows="2" required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Category / Domain <span class="required">*</span></label>
+                            <input type="text" name="category" id="editCategory" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Display Order</label>
+                            <input type="number" name="questionOrder" id="editQuestionOrder" class="form-control" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="isActive" id="editIsActive" value="true">
+                            <span style="font-size: 0.95rem; font-weight: 600; color: var(--navy-900);">Active (Available in student assessment)</span>
+                        </label>
+                    </div>
+
+                    <h4 style="font-size: 1rem; color: var(--navy-900); margin: 1.25rem 0 0.5rem 0;">4 Selectable Options</h4>
+                    <input type="hidden" name="optionId_4" id="editOptionId_4">
+                    <div class="form-group">
+                        <label class="form-label">Option 4 (Rating: 4)</label>
+                        <input type="text" name="optionText_4" id="editOptionText_4" class="form-control" required>
+                    </div>
+                    <input type="hidden" name="optionId_3" id="editOptionId_3">
+                    <div class="form-group">
+                        <label class="form-label">Option 3 (Rating: 3)</label>
+                        <input type="text" name="optionText_3" id="editOptionText_3" class="form-control" required>
+                    </div>
+                    <input type="hidden" name="optionId_2" id="editOptionId_2">
+                    <div class="form-group">
+                        <label class="form-label">Option 2 (Rating: 2)</label>
+                        <input type="text" name="optionText_2" id="editOptionText_2" class="form-control" required>
+                    </div>
+                    <input type="hidden" name="optionId_1" id="editOptionId_1">
+                    <div class="form-group">
+                        <label class="form-label">Option 1 (Rating: 1)</label>
+                        <input type="text" name="optionText_1" id="editOptionText_1" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-close-modal="editQuestionModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveEditQuestionBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Administrator Access Portal.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+let questionsData = [];
+
+async function loadQuestions() {
+    const ctx = CareerApp.getContextPath();
+    const alertBox = document.getElementById('questionsAlertBox');
+    const tableBody = document.getElementById('questionsTableBody');
+
+    const res = await CareerApp.fetchJson(ctx + '/admin/questions?format=json');
+    if (!res) return;
+
+    questionsData = res.questions || [];
+
+    // Sentinel check alert
+    if (res.questionCountValid) {
+        alertBox.innerHTML = `
+            <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <div>Integrity check passed: Exactly <strong>20 active questions</strong> configured. Student assessments are open.</div>
+            </div>`;
+    } else {
+        alertBox.innerHTML = `
+            <div class="alert alert-warning" role="alert" style="margin-bottom: 1.5rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <div>
+                    <strong>Warning:</strong> Currently active questions: <strong>${res.activeCount}</strong>. The system requires exactly <strong>20 active questions</strong> for valid student assessments. Please activate or deactivate questions below to restore the requirement.
+                </div>
+            </div>`;
+    }
+
+    if (res.nextOrder) {
+        document.getElementById('addQuestionOrderInput').value = res.nextOrder;
+    }
+
+    if (questionsData.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No questions found in database.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = questionsData.map(q => `
+        <tr>
+            <td><strong style="color: var(--navy-900);">#${q.questionOrder}</strong></td>
+            <td><span class="badge badge-slate">${CareerApp.escapeHtml(q.category)}</span></td>
+            <td>
+                <div style="font-weight: 600; color: var(--navy-900);">${CareerApp.escapeHtml(q.questionText)}</div>
+                <div style="font-size: 0.8rem; color: var(--slate-500); margin-top: 0.2rem;">4 options configured (Ratings 1-4)</div>
+            </td>
+            <td>
+                ${q.active 
+                    ? `<span class="badge badge-teal">Active</span>` 
+                    : `<span class="badge badge-slate" style="opacity: 0.6;">Inactive</span>`}
+            </td>
+            <td style="text-align: right;">
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="openEditModal(${q.id})">
+                        Edit
+                    </button>
+                    <button type="button" class="btn ${q.active ? 'btn-outline-danger' : 'btn-outline-primary'} btn-sm" onclick="toggleQuestionStatus(${q.id}, ${q.active})">
+                        ${q.active ? 'Deactivate' : 'Activate'}
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function openEditModal(qId) {
+    const q = questionsData.find(item => item.id === qId);
+    if (!q) return;
+
+    document.getElementById('editQuestionId').value = q.id;
+    document.getElementById('editQuestionText').value = q.questionText || '';
+    document.getElementById('editCategory').value = q.category || '';
+    document.getElementById('editQuestionOrder').value = q.questionOrder || 1;
+    document.getElementById('editIsActive').checked = !!q.active;
+
+    (q.options || []).forEach(opt => {
+        const idInput = document.getElementById(`editOptionId_${opt.ratingValue}`);
+        const textInput = document.getElementById(`editOptionText_${opt.ratingValue}`);
+        if (idInput) idInput.value = opt.id;
+        if (textInput) textInput.value = opt.optionText || '';
+    });
+
+    openModal('editQuestionModal');
+}
+
+async function toggleQuestionStatus(qId, currentStatus) {
+    const ctx = CareerApp.getContextPath();
+    const session = CareerApp.getSessionData();
+    const bodyData = new URLSearchParams();
+    bodyData.append('action', 'toggle');
+    bodyData.append('questionId', qId);
+    bodyData.append('currentStatus', currentStatus);
+    if (session && session.csrfToken) {
+        bodyData.append('csrfToken', session.csrfToken);
+    }
+
+    const res = await CareerApp.fetchJson(ctx + '/admin/questions', {
+        method: 'POST',
+        body: bodyData,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+
+    if (res && res.success) {
+        loadQuestions();
+    } else {
+        alert(res ? res.message : 'Toggle failed.');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    loadQuestions();
+
+    const ctx = CareerApp.getContextPath();
+
+    // Add question form submit
+    document.getElementById('addQuestionForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = document.getElementById('saveNewQuestionBtn');
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+
+        const bodyData = new URLSearchParams(new FormData(this));
+        const res = await CareerApp.fetchJson(ctx + '/admin/questions', {
+            method: 'POST',
+            body: bodyData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        btn.disabled = false;
+        btn.textContent = 'Add Question & Options';
+
+        if (res && res.success) {
+            closeModal('addQuestionModal');
+            this.reset();
+            loadQuestions();
+        } else {
+            alert(res ? res.message : 'Failed to add question.');
+        }
+    });
+
+    // Edit question form submit
+    document.getElementById('editQuestionForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = document.getElementById('saveEditQuestionBtn');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        const bodyData = new URLSearchParams(new FormData(this));
+        const res = await CareerApp.fetchJson(ctx + '/admin/questions', {
+            method: 'POST',
+            body: bodyData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+
+        if (res && res.success) {
+            closeModal('editQuestionModal');
+            loadQuestions();
+        } else {
+            alert(res ? res.message : 'Failed to update question.');
+        }
+    });
+});
+</script>
+</body>
+</html>

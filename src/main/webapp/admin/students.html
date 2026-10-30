@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Directory &amp; Responses - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+            <div>
+                <span class="badge badge-teal" style="margin-bottom: 0.5rem;">Student Auditing</span>
+                <h1 style="font-size: 2rem; color: var(--navy-900); font-weight: 800;">
+                    Registered Students Directory
+                </h1>
+                <p style="color: var(--slate-600); font-size: 0.95rem;">
+                    Browse registered engineering students, inspect their profiles, and audit their 20-question assessment responses.
+                </p>
+            </div>
+
+            <!-- Search Filter -->
+            <form id="studentSearchForm" style="display: flex; gap: 0.5rem;">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by name or email..." style="width: 260px;">
+                <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                <button type="button" id="clearSearchBtn" class="btn btn-secondary btn-sm" style="display: none;">Clear</button>
+            </form>
+        </div>
+
+        <!-- Selected Student Profile Drawer/Card -->
+        <div id="selectedStudentProfileContainer"></div>
+
+        <!-- Students Directory Table Card -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 style="font-size: 1.25rem; color: var(--navy-900); font-weight: 700;">Student Records</h2>
+                    <p style="color: var(--slate-500); font-size: 0.85rem;" id="totalCountLabel">Loading records...</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">ID</th>
+                            <th>Student Name &amp; Email</th>
+                            <th>College / University</th>
+                            <th>Degree &amp; Year</th>
+                            <th style="text-align: center;">Completed Attempts</th>
+                            <th style="text-align: right; width: 180px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <tr>
+                            <td colspan="6" class="loading-state">
+                                <div class="spinner"></div>
+                                <div>Loading registered students...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Administrator Access Portal.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+let currentSearch = '';
+let currentStudentId = null;
+
+async function fetchStudents() {
+    const ctx = CareerApp.getContextPath();
+    const tableBody = document.getElementById('studentsTableBody');
+    const profileContainer = document.getElementById('selectedStudentProfileContainer');
+    const totalLabel = document.getElementById('totalCountLabel');
+    const clearBtn = document.getElementById('clearSearchBtn');
+
+    if (currentSearch) {
+        clearBtn.style.display = 'inline-flex';
+    } else {
+        clearBtn.style.display = 'none';
+    }
+
+    let url = ctx + '/admin/students?format=json';
+    if (currentSearch) url += '&search=' + encodeURIComponent(currentSearch);
+    if (currentStudentId) url += '&studentId=' + encodeURIComponent(currentStudentId);
+
+    const res = await CareerApp.fetchJson(url);
+    if (!res) return;
+
+    totalLabel.textContent = `Total matching students: ${res.totalCount || 0}`;
+
+    // Render Selected Student Profile if present
+    if (res.selectedStudent) {
+        const s = res.selectedStudent;
+        const subs = res.studentSubmissions || [];
+
+        profileContainer.innerHTML = `
+            <div class="card fade-in" style="margin-bottom: 2rem; border-color: var(--blue-400); background: #f8fbff;">
+                <div class="card-header">
+                    <div>
+                        <span class="badge badge-blue">Student Profile #${s.id}</span>
+                        <h2 style="font-size: 1.35rem; color: var(--navy-900); font-weight: 700; margin-top: 0.25rem;">
+                            ${CareerApp.escapeHtml(s.fullName)}
+                        </h2>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeStudentProfile()">Close Profile</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.95rem; margin-bottom: 1.5rem;">
+                    <div><strong>Email:</strong> ${CareerApp.escapeHtml(s.email)}</div>
+                    <div><strong>College:</strong> ${CareerApp.escapeHtml(s.collegeName)}</div>
+                    <div><strong>Degree:</strong> ${CareerApp.escapeHtml(s.degree)}</div>
+                    <div><strong>Year of Study:</strong> Year ${s.currentYear}</div>
+                    <div><strong>Registered On:</strong> ${s.createdAt || 'N/A'}</div>
+                </div>
+
+                <h3 style="font-size: 1.1rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.75rem;">
+                    Assessment Submissions by this Student (${subs.length})
+                </h3>
+
+                ${subs.length > 0 ? `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Submission ID</th>
+                                    <th>Submission Date</th>
+                                    <th>Top Recommended Career</th>
+                                    <th>Compatibility Score</th>
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${subs.map(sub => {
+                                    const top = (sub.recommendations && sub.recommendations.length > 0) ? sub.recommendations[0] : null;
+                                    const cName = top && top.career ? top.career.name : 'Completed';
+                                    const score = top ? top.compatibilityScore : null;
+                                    return `
+                                        <tr>
+                                            <td><strong>#${sub.id}</strong></td>
+                                            <td>${sub.submissionDate || 'Recently'}</td>
+                                            <td><span class="badge badge-teal">${CareerApp.escapeHtml(cName)}</span></td>
+                                            <td>${score !== null ? `<strong style="color: var(--teal-700);">${score}%</strong>` : 'N/A'}</td>
+                                            <td style="text-align: right;">
+                                                <a href="student-responses?submissionId=${sub.id}" class="btn btn-primary btn-sm">
+                                                    View 20 Answers &amp; Top 5 Results
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : `<p style="color: var(--slate-500); font-size: 0.9rem;">No assessment submissions found for this student.</p>`}
+            </div>
+        `;
+    } else {
+        profileContainer.innerHTML = '';
+    }
+
+    const students = res.students || [];
+    const subCounts = res.submissionCounts || {};
+
+    if (students.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No students found matching query.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = students.map(s => {
+        const count = subCounts[s.id] || 0;
+        return `
+            <tr>
+                <td><strong>#${s.id}</strong></td>
+                <td>
+                    <div style="font-weight: 700; color: var(--navy-900);">${CareerApp.escapeHtml(s.fullName)}</div>
+                    <div style="font-size: 0.85rem; color: var(--slate-500);">${CareerApp.escapeHtml(s.email)}</div>
+                </td>
+                <td style="font-size: 0.9rem;">${CareerApp.escapeHtml(s.collegeName)}</td>
+                <td style="font-size: 0.9rem;">${CareerApp.escapeHtml(s.degree)} &bull; Year ${s.currentYear}</td>
+                <td style="text-align: center;">
+                    <span class="badge ${count > 0 ? 'badge-blue' : 'badge-slate'}">${count} ${count === 1 ? 'Attempt' : 'Attempts'}</span>
+                </td>
+                <td style="text-align: right;">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectStudent(${s.id})">
+                        Inspect Profile
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function selectStudent(id) {
+    currentStudentId = id;
+    fetchStudents();
+    window.scrollTo({ top: 150, behavior: 'smooth' });
+}
+
+function closeStudentProfile() {
+    currentStudentId = null;
+    fetchStudents();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const params = new URLSearchParams(window.location.search);
+    const initialId = params.get('studentId');
+    const initialSearch = params.get('search');
+    if (initialId) currentStudentId = initialId;
+    if (initialSearch) {
+        currentSearch = initialSearch;
+        document.getElementById('searchInput').value = initialSearch;
+    }
+
+    fetchStudents();
+
+    document.getElementById('studentSearchForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        currentSearch = document.getElementById('searchInput').value.trim();
+        fetchStudents();
+    });
+
+    document.getElementById('clearSearchBtn').addEventListener('click', function () {
+        currentSearch = '';
+        document.getElementById('searchInput').value = '';
+        fetchStudents();
+    });
+});
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import com.career.dao.QuestionDAO;
 import com.career.model.Question;
 import com.career.model.QuestionOption;
 import com.career.service.QuestionService;
+import com.career.util.JsonUtil;
 import com.career.util.SecurityUtil;
 
 import java.io.IOException;
@@ -36,10 +37,11 @@ public class AdminQuestionsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String editIdStr = request.getParameter("editId");
+        Question editQuestion = null;
         if (editIdStr != null && !editIdStr.trim().isEmpty()) {
             try {
                 int editId = Integer.parseInt(editIdStr.trim());
-                Question editQuestion = questionDAO.getQuestionById(editId);
+                editQuestion = questionDAO.getQuestionById(editId);
                 request.setAttribute("editQuestion", editQuestion);
             } catch (NumberFormatException ignored) {}
         }
@@ -50,18 +52,42 @@ public class AdminQuestionsServlet extends HttpServlet {
 
         SecurityUtil.getOrCreateCsrfToken(request);
 
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        if ((accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format)) {
+            response.setContentType("application/json;charset=UTF-8");
+            StringBuilder sb = new StringBuilder("{");
+            sb.append("\"activeCount\":").append(activeCount).append(",");
+            sb.append("\"nextOrder\":").append(nextOrder).append(",");
+            sb.append("\"questionCountValid\":").append(activeCount == QuestionService.REQUIRED_ACTIVE_QUESTIONS).append(",");
+            sb.append("\"editQuestion\":").append(editQuestion != null ? JsonUtil.toJson(editQuestion) : "null").append(",");
+            sb.append("\"questions\":").append(JsonUtil.questionsToJson(allQuestions));
+            sb.append("}");
+            response.getWriter().write(sb.toString());
+            return;
+        }
+
         request.setAttribute("questions", allQuestions);
         request.setAttribute("activeCount", activeCount);
         request.setAttribute("nextOrder", nextOrder);
         request.setAttribute("questionCountValid", (activeCount == QuestionService.REQUIRED_ACTIVE_QUESTIONS));
 
-        request.getRequestDispatcher("/WEB-INF/views/admin/questions.jsp").forward(request, response);
+        request.getRequestDispatcher("/admin/questions.html").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        boolean isJson = (accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format);
+
         if (!SecurityUtil.validateCsrfToken(request)) {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Session security validation failed. Please refresh and try again."));
+                return;
+            }
             request.setAttribute("errorMessage", "Session security validation failed. Please try again.");
             doGet(request, response);
             return;
@@ -70,17 +96,22 @@ public class AdminQuestionsServlet extends HttpServlet {
         String action = request.getParameter("action");
 
         if ("add".equals(action)) {
-            handleAddQuestion(request, response);
+            handleAddQuestion(request, response, isJson);
         } else if ("edit".equals(action)) {
-            handleEditQuestion(request, response);
+            handleEditQuestion(request, response, isJson);
         } else if ("toggle".equals(action)) {
-            handleToggleStatus(request, response);
+            handleToggleStatus(request, response, isJson);
         } else {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Unknown action."));
+                return;
+            }
             response.sendRedirect(request.getContextPath() + "/admin/questions");
         }
     }
 
-    private void handleAddQuestion(HttpServletRequest request, HttpServletResponse response)
+    private void handleAddQuestion(HttpServletRequest request, HttpServletResponse response, boolean isJson)
             throws ServletException, IOException {
         String questionText = request.getParameter("questionText");
         String category = request.getParameter("category");
@@ -98,7 +129,12 @@ public class AdminQuestionsServlet extends HttpServlet {
             opt3 == null || opt3.trim().isEmpty() ||
             opt2 == null || opt2.trim().isEmpty() ||
             opt1 == null || opt1.trim().isEmpty()) {
-            request.setAttribute("errorMessage", "All question fields and all 4 option labels are required.");
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "All fields (question text, category, and 4 option labels) are required."));
+                return;
+            }
+            request.setAttribute("errorMessage", "All fields are required.");
             doGet(request, response);
             return;
         }
@@ -113,9 +149,9 @@ public class AdminQuestionsServlet extends HttpServlet {
         boolean active = "true".equalsIgnoreCase(activeStr) || "1".equals(activeStr) || "on".equalsIgnoreCase(activeStr);
 
         Question q = new Question();
-        q.setQuestionOrder(order);
         q.setQuestionText(questionText.trim());
         q.setCategory(category.trim());
+        q.setQuestionOrder(order);
         q.setActive(active);
 
         List<QuestionOption> options = new ArrayList<>();
@@ -124,16 +160,26 @@ public class AdminQuestionsServlet extends HttpServlet {
         options.add(new QuestionOption(0, 0, opt2.trim(), 2));
         options.add(new QuestionOption(0, 0, opt1.trim(), 1));
 
-        boolean added = questionDAO.addQuestion(q, options);
-        if (added) {
+        boolean success = questionDAO.addQuestion(q, options);
+        if (success) {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(true, "Question and options added successfully.", request.getContextPath() + "/admin/questions?success=question_added"));
+                return;
+            }
             response.sendRedirect(request.getContextPath() + "/admin/questions?success=question_added");
         } else {
-            request.setAttribute("errorMessage", "Failed to add new question. Please check duplicate order or database errors.");
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Database insert failed. Please try again."));
+                return;
+            }
+            request.setAttribute("errorMessage", "Failed to add question.");
             doGet(request, response);
         }
     }
 
-    private void handleEditQuestion(HttpServletRequest request, HttpServletResponse response)
+    private void handleEditQuestion(HttpServletRequest request, HttpServletResponse response, boolean isJson)
             throws ServletException, IOException {
         String idStr = request.getParameter("questionId");
         String questionText = request.getParameter("questionText");
@@ -143,6 +189,11 @@ public class AdminQuestionsServlet extends HttpServlet {
 
         if (idStr == null || questionText == null || questionText.trim().isEmpty() ||
             category == null || category.trim().isEmpty()) {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Required question fields cannot be empty."));
+                return;
+            }
             request.setAttribute("errorMessage", "Required question fields cannot be empty.");
             doGet(request, response);
             return;
@@ -154,6 +205,11 @@ public class AdminQuestionsServlet extends HttpServlet {
             id = Integer.parseInt(idStr.trim());
             order = Integer.parseInt(orderStr.trim());
         } catch (NumberFormatException e) {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Invalid question ID or question order value."));
+                return;
+            }
             request.setAttribute("errorMessage", "Invalid question ID or question order value.");
             doGet(request, response);
             return;
@@ -183,14 +239,24 @@ public class AdminQuestionsServlet extends HttpServlet {
         }
 
         if (updated) {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(true, "Question updated successfully.", request.getContextPath() + "/admin/questions?success=question_updated"));
+                return;
+            }
             response.sendRedirect(request.getContextPath() + "/admin/questions?success=question_updated");
         } else {
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Failed to update question."));
+                return;
+            }
             request.setAttribute("errorMessage", "Failed to update question.");
             doGet(request, response);
         }
     }
 
-    private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response)
+    private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response, boolean isJson)
             throws ServletException, IOException {
         String idStr = request.getParameter("questionId");
         String currentStatusStr = request.getParameter("currentStatus");
@@ -202,11 +268,21 @@ public class AdminQuestionsServlet extends HttpServlet {
                 boolean newStatus = !currentStatus;
 
                 questionDAO.toggleActiveStatus(id, newStatus);
+                if (isJson) {
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write(JsonUtil.response(true, "Question status toggled.", request.getContextPath() + "/admin/questions?success=status_toggled"));
+                    return;
+                }
                 response.sendRedirect(request.getContextPath() + "/admin/questions?success=status_toggled");
                 return;
             } catch (NumberFormatException ignored) {}
         }
 
+        if (isJson) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(JsonUtil.response(false, "Invalid question ID."));
+            return;
+        }
         response.sendRedirect(request.getContextPath() + "/admin/questions");
     }
 }

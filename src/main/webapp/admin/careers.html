@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Catalog Management - Career Recommendation System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="../" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+            <div>
+                <span class="badge badge-teal" style="margin-bottom: 0.5rem;">Standardized Career Taxonomy</span>
+                <h1 style="font-size: 2rem; color: var(--navy-900); font-weight: 800;">
+                    All 35 B.Tech CSE Career Paths
+                </h1>
+                <p style="color: var(--slate-600); font-size: 0.95rem;">
+                    Browse and inspect the 35 standardized engineering careers seeded in MySQL with their respective algorithmic question mappings.
+                </p>
+            </div>
+            <div>
+                <span class="badge badge-blue" style="font-size: 0.9rem; padding: 0.4rem 1rem;" id="totalCareersBadge">
+                    Total Seeded Careers: 35
+                </span>
+            </div>
+        </div>
+
+        <div id="careerAlertBox"></div>
+
+        <!-- Selected Career Inspector Card -->
+        <div id="selectedCareerContainer"></div>
+
+        <!-- Careers Table Card -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 style="font-size: 1.25rem; color: var(--navy-900); font-weight: 700;">Seeded Career Catalog</h2>
+                    <p style="color: var(--slate-500); font-size: 0.85rem;">Standardized careers matched by the recommendation engine.</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">ID</th>
+                            <th>Career Name</th>
+                            <th>Short Description</th>
+                            <th style="width: 140px;">Status</th>
+                            <th style="text-align: right; width: 160px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="careersTableBody">
+                        <tr>
+                            <td colspan="5" class="loading-state">
+                                <div class="spinner"></div>
+                                <div>Loading careers catalog...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Administrator Access Portal.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+let careersData = [];
+let currentCareerId = null;
+
+async function loadCareers() {
+    const ctx = CareerApp.getContextPath();
+    const tableBody = document.getElementById('careersTableBody');
+    const inspector = document.getElementById('selectedCareerContainer');
+    const badge = document.getElementById('totalCareersBadge');
+
+    let url = ctx + '/admin/careers?format=json';
+    if (currentCareerId) url += '&id=' + encodeURIComponent(currentCareerId);
+
+    const res = await CareerApp.fetchJson(url);
+    if (!res) return;
+
+    careersData = res.careers || [];
+    badge.textContent = `Total Seeded Careers: ${res.totalCareers || careersData.length}`;
+
+    if (res.selectedCareer) {
+        const c = res.selectedCareer;
+        const mappings = c.mappings || [];
+
+        inspector.innerHTML = `
+            <div class="card fade-in" style="margin-bottom: 2.5rem; border-color: var(--blue-400); background: #f8fbff;">
+                <div class="card-header">
+                    <div>
+                        <span class="badge badge-blue">Career Path #${c.id}</span>
+                        <h2 style="font-size: 1.4rem; color: var(--navy-900); font-weight: 700; margin-top: 0.25rem;">
+                            ${CareerApp.escapeHtml(c.name)}
+                        </h2>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeCareerInspector()">Close Inspector</button>
+                </div>
+
+                <form id="editCareerForm" novalidate>
+                    <input type="hidden" name="careerId" value="${c.id}">
+                    <input type="hidden" name="csrfToken" class="csrf-field">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Career Name</label>
+                            <input type="text" name="name" class="form-control" value="${CareerApp.escapeHtml(c.name)}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Active Status</label>
+                            <select name="isActive" class="form-control">
+                                <option value="true" ${c.active ? 'selected' : ''}>Active (Included in Recommendation Engine)</option>
+                                <option value="false" ${!c.active ? 'selected' : ''}>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Short Description</label>
+                        <textarea name="shortDescription" class="form-control" rows="2" required>${CareerApp.escapeHtml(c.shortDescription)}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Typical Industry Responsibilities</label>
+                        <textarea name="responsibilities" class="form-control" rows="2" required>${CareerApp.escapeHtml(c.responsibilities)}</textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Required Skills (comma separated)</label>
+                            <input type="text" name="skillsRequired" class="form-control" value="${CareerApp.escapeHtml(c.skillsRequired)}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Recommended Tools &amp; Technologies (comma separated)</label>
+                            <input type="text" name="toolsTechnologies" class="form-control" value="${CareerApp.escapeHtml(c.toolsTechnologies)}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Beginner Learning Roadmap / Suggestions</label>
+                        <textarea name="learningSuggestions" class="form-control" rows="2" required>${CareerApp.escapeHtml(c.learningSuggestions)}</textarea>
+                    </div>
+
+                    <!-- Mapped Questions -->
+                    ${mappings.length > 0 ? `
+                        <div style="margin: 1.5rem 0;">
+                            <h3 style="font-size: 1rem; color: var(--navy-900); font-weight: 700; margin-bottom: 0.5rem;">
+                                Mapped Assessment Questions &amp; Weights
+                            </h3>
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Assessment Topic</th>
+                                            <th style="width: 140px; text-align: center;">Algorithm Weight</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${mappings.map(m => `
+                                            <tr>
+                                                <td><span class="badge badge-slate">${CareerApp.escapeHtml(m.category || 'General')}</span></td>
+                                                <td style="font-size: 0.9rem;">${CareerApp.escapeHtml(m.questionText)}</td>
+                                                <td style="text-align: center;">
+                                                    <span class="badge ${m.weight >= 2.5 ? 'badge-teal' : 'badge-blue'}">${m.weight.toFixed(1)}x Weight</span>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                        <button type="submit" class="btn btn-primary" id="saveCareerBtn">Save Career Profile</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeCareerInspector()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        // Wire edit career submit
+        document.getElementById('editCareerForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveCareerBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            const session = CareerApp.getSessionData();
+            const bodyData = new URLSearchParams(new FormData(this));
+            if (session && session.csrfToken) {
+                bodyData.set('csrfToken', session.csrfToken);
+            }
+
+            const updateRes = await CareerApp.fetchJson(ctx + '/admin/careers', {
+                method: 'POST',
+                body: bodyData,
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+
+            btn.disabled = false;
+            btn.textContent = 'Save Career Profile';
+
+            if (updateRes && updateRes.success) {
+                document.getElementById('careerAlertBox').innerHTML = `
+                    <div class="alert alert-success fade-in" style="margin-bottom: 1.5rem;">
+                        <div>Career profile updated successfully.</div>
+                    </div>`;
+                loadCareers();
+            } else {
+                alert(updateRes ? updateRes.message : 'Update failed.');
+            }
+        });
+    } else {
+        inspector.innerHTML = '';
+    }
+
+    if (careersData.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No careers found.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = careersData.map(c => `
+        <tr>
+            <td><strong>#${c.id}</strong></td>
+            <td><strong>${CareerApp.escapeHtml(c.name)}</strong></td>
+            <td style="font-size: 0.9rem; color: var(--slate-700); max-width: 480px;">${CareerApp.escapeHtml(c.shortDescription)}</td>
+            <td>
+                ${c.active 
+                    ? `<span class="badge badge-teal">Active</span>` 
+                    : `<span class="badge badge-slate" style="opacity: 0.6;">Inactive</span>`}
+            </td>
+            <td style="text-align: right;">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectCareer(${c.id})">
+                    Inspect &amp; Edit
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function selectCareer(id) {
+    currentCareerId = id;
+    loadCareers();
+    window.scrollTo({ top: 150, behavior: 'smooth' });
+}
+
+function closeCareerInspector() {
+    currentCareerId = null;
+    loadCareers();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const params = new URLSearchParams(window.location.search);
+    const initialId = params.get('id');
+    if (initialId) currentCareerId = initialId;
+    loadCareers();
+});
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@ package com.career.servlet;
 
 import com.career.model.Admin;
 import com.career.service.AuthService;
+import com.career.util.JsonUtil;
 import com.career.util.SecurityUtil;
 
 import java.io.IOException;
@@ -33,15 +34,23 @@ public class AdminLoginServlet extends HttpServlet {
         }
 
         SecurityUtil.getOrCreateCsrfToken(request);
-        request.getRequestDispatcher("/WEB-INF/views/admin/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/admin/login.html").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String accept = request.getHeader("Accept");
+        String format = request.getParameter("format");
+        boolean isJson = (accept != null && accept.contains("application/json")) || "json".equalsIgnoreCase(format);
+
         if (!SecurityUtil.validateCsrfToken(request)) {
-            request.setAttribute("errorMessage", "Session security token validation failed. Please try again.");
-            request.getRequestDispatcher("/WEB-INF/views/admin/login.jsp").forward(request, response);
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Session security token validation failed. Please refresh and try again."));
+                return;
+            }
+            response.sendRedirect(request.getContextPath() + "/admin/login?error=csrf");
             return;
         }
 
@@ -49,9 +58,12 @@ public class AdminLoginServlet extends HttpServlet {
         String password = request.getParameter("password");
 
         if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty() || password == null || password.isEmpty()) {
-            request.setAttribute("errorMessage", "Please provide administrator username/email and password.");
-            request.setAttribute("usernameOrEmail", usernameOrEmail);
-            request.getRequestDispatcher("/WEB-INF/views/admin/login.jsp").forward(request, response);
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Please provide administrator username/email and password."));
+                return;
+            }
+            response.sendRedirect(request.getContextPath() + "/admin/login?error=empty_fields");
             return;
         }
 
@@ -73,11 +85,19 @@ public class AdminLoginServlet extends HttpServlet {
 
             SecurityUtil.getOrCreateCsrfToken(request);
 
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(true, "Admin authenticated successfully.", request.getContextPath() + "/admin/dashboard"));
+                return;
+            }
             response.sendRedirect(request.getContextPath() + "/admin/dashboard");
         } else {
-            request.setAttribute("errorMessage", "Invalid administrator credentials. Access is restricted.");
-            request.setAttribute("usernameOrEmail", usernameOrEmail);
-            request.getRequestDispatcher("/WEB-INF/views/admin/login.jsp").forward(request, response);
+            if (isJson) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(JsonUtil.response(false, "Invalid administrator credentials. Access is restricted."));
+                return;
+            }
+            response.sendRedirect(request.getContextPath() + "/admin/login?error=invalid_credentials");
         }
     }
 }

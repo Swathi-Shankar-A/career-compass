@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration - Career Recommendation System</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+        <a href="./" class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span>CareerCompass <span class="brand-badge">CSE</span></span>
+        </a>
+        <nav>
+            <ul class="nav-menu" id="siteNavMenu"></ul>
+        </nav>
+        <div class="nav-actions" id="siteNavActions"></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Create Student Account</h1>
+                <p>Enter your academic details to access the career recommendation assessment.</p>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="registerAlertContainer"></div>
+
+            <form action="register" method="POST" id="studentRegisterForm" novalidate>
+                <input type="hidden" name="csrfToken" id="csrfToken">
+
+                <div class="form-group">
+                    <label for="fullName" class="form-label">Full Name <span class="required">*</span></label>
+                    <input type="text" id="fullName" name="fullName" class="form-control"
+                           placeholder="e.g. Aarav Sharma" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" class="form-control"
+                           placeholder="student@college.edu" required>
+                    <div class="form-hint">Used for logging in and accessing your assessment history.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="collegeName" class="form-label">College / University Name <span class="required">*</span></label>
+                    <input type="text" id="collegeName" name="collegeName" class="form-control"
+                           placeholder="e.g. Delhi Technological University" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="degree" class="form-label">Degree / Department <span class="required">*</span></label>
+                        <select id="degree" name="degree" class="form-control" required>
+                            <option value="B.Tech CSE" selected>B.Tech Computer Science &amp; Engg</option>
+                            <option value="B.Tech CSE (AI &amp; ML)">B.Tech CSE (AI &amp; ML)</option>
+                            <option value="B.Tech CSE (Data Science)">B.Tech CSE (Data Science)</option>
+                            <option value="B.Tech CSE (Cybersecurity)">B.Tech CSE (Cybersecurity)</option>
+                            <option value="B.Tech Information Technology">B.Tech Information Technology</option>
+                            <option value="B.Tech CSE (IoT &amp; Systems)">B.Tech CSE (IoT &amp; Systems)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentYear" class="form-label">Current Year of Study <span class="required">*</span></label>
+                        <select id="currentYear" name="currentYear" class="form-control" required>
+                            <option value="1">1st Year (Freshman)</option>
+                            <option value="2">2nd Year (Sophomore)</option>
+                            <option value="3" selected>3rd Year (Junior)</option>
+                            <option value="4">4th Year (Senior)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="At least 6 characters" minlength="6" required>
+                    <div class="form-hint">Stored securely using PBKDF2 with SHA-256 and salted iterations.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirm Password <span class="required">*</span></label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control"
+                           placeholder="Re-enter your password" minlength="6" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitRegisterBtn" style="margin-top: 1.5rem;">
+                    Create Account &amp; Proceed
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Already registered? <a href="login">Sign in here</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div>&copy; <span id="currentYearSpan">2026</span> CareerCompass CSE. Academic Project for B.Tech CSE.</div>
+        </div>
+    </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('currentYearSpan').textContent = new Date().getFullYear();
+    const ctx = CareerApp.getContextPath();
+    const alertBox = document.getElementById('registerAlertContainer');
+    const form = document.getElementById('studentRegisterForm');
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitRegisterBtn');
+        const fullName = document.getElementById('fullName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const collegeName = document.getElementById('collegeName').value.trim();
+        const degree = document.getElementById('degree').value;
+        const currentYear = document.getElementById('currentYear').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const csrfToken = document.getElementById('csrfToken').value;
+
+        if (!fullName || !email || !collegeName || !password || !confirmPassword) {
+            alertBox.innerHTML = `
+                <div class="alert alert-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div>Please fill in all mandatory fields.</div>
+                </div>`;
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            alertBox.innerHTML = `
+                <div class="alert alert-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div>Passwords do not match. Please verify and retry.</div>
+                </div>`;
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Registering Account...';
+
+        const bodyData = new URLSearchParams();
+        bodyData.append('fullName', fullName);
+        bodyData.append('email', email);
+        bodyData.append('collegeName', collegeName);
+        bodyData.append('degree', degree);
+        bodyData.append('currentYear', currentYear);
+        bodyData.append('password', password);
+        bodyData.append('confirmPassword', confirmPassword);
+        bodyData.append('csrfToken', csrfToken);
+
+        const res = await CareerApp.fetchJson(ctx + '/register', {
+            method: 'POST',
+            body: bodyData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account & Proceed';
+
+        if (res && res.success) {
+            window.location.href = res.redirect || (ctx + '/login?registered=true');
+        } else {
+            alertBox.innerHTML = `
+                <div class="alert alert-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div>${CareerApp.escapeHtml(res ? res.message : 'Registration failed.')}</div>
+                </div>`;
+        }
+    });
+});
+</script>
+</body>
+</html>
